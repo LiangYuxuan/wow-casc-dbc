@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import crypto from 'node:crypto';
 
 import { recordLog, LogLevel } from './logger.ts';
 import {
@@ -11,9 +12,10 @@ import { parseProductVersions, parseProductCDNs } from './parsers/productConfig.
 import { parseCDNConfig, parseBuildConfig } from './parsers/config.ts';
 import parseArchiveIndex from './parsers/archiveIndex.ts';
 import parseEncodingFile from './parsers/encodingFile.ts';
-import parseRootFile from './parsers/rootFile.ts';
+import parseRootFile, { FileInfo } from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
 import getFileDataIDByNameRemote from './listfile.ts';
+import BLTEReader from './blte.ts';
 import { resolveCDNHost, asyncQueue, formatFileSize } from './utils.ts';
 
 import type { Version } from './parsers/productConfig.ts';
@@ -140,5 +142,32 @@ export default class CASCClient {
         }
 
         return getFileDataIDByNameRemote(name);
+    }
+
+    getContentKeysByFileDataID(fileDataID: number): FileInfo[] | undefined {
+        assert(this.preload, 'Client not initialized');
+
+        const { rootFile } = this.preload;
+
+        return rootFile.fileDataID2CKey.get(fileDataID);
+    }
+
+    async getFileByContentKey(contentKey: string): Promise<Buffer> {
+        assert(this.preload, 'Client not initialized');
+
+        const { prefixes, encoding } = this.preload;
+        const eKeys = encoding.cKey2EKey.get(contentKey);
+        assert(eKeys, `Failing to find encoding key for ${contentKey}`);
+
+        const eKey = typeof eKeys === 'string' ? eKeys : eKeys[0];
+        const blte = await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig, 'data');
+
+        const reader = new BLTEReader(blte, eKey);
+        reader.processBytes();
+
+        const hash = crypto.createHash('md5').update(reader.buffer).digest('hex');
+        assert(hash === contentKey, `Invalid content key: expected ${contentKey}, got ${hash}`);
+
+        return reader.buffer;
     }
 }

@@ -40,7 +40,7 @@ export const LocaleFlags = {
     ptPT: 0x10000,
 };
 
-interface FileInfo {
+export interface FileInfo {
     cKey: string,
     contentFlags: number,
     localeFlags: number,
