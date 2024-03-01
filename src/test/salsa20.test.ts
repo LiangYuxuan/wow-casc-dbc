@@ -44,17 +44,17 @@ describe('Salsa20', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLocaleLowerCase());
+        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLowerCase());
+        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLowerCase());
+        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLowerCase());
+        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLocaleLowerCase());
+        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
     });
 
     test('Set 2, vector#0', () => {
@@ -86,17 +86,17 @@ describe('Salsa20', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLocaleLowerCase());
+        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLowerCase());
+        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLowerCase());
+        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLowerCase());
+        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLocaleLowerCase());
+        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
     });
 
     test('Set 3, vector#0', () => {
@@ -128,17 +128,17 @@ describe('Salsa20', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLocaleLowerCase());
+        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLowerCase());
+        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLowerCase());
+        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLowerCase());
+        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLocaleLowerCase());
+        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
     });
 
     test('Set 4, vector#0', () => {
@@ -170,17 +170,17 @@ describe('Salsa20', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(131072)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(65472, 65536))).toBe(block2.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(65536, 65600))).toBe(block3.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(131008, 131072))).toBe(block4.toLocaleLowerCase());
+        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLowerCase());
+        expect(bytesToHex(result.slice(65472, 65536))).toBe(block2.toLowerCase());
+        expect(bytesToHex(result.slice(65536, 65600))).toBe(block3.toLowerCase());
+        expect(bytesToHex(result.slice(131008, 131072))).toBe(block4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 131072; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLocaleLowerCase());
+        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
     });
 
     test('Set 5, vector#0', () => {
@@ -212,17 +212,17 @@ describe('Salsa20', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLocaleLowerCase());
+        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLowerCase());
+        expect(bytesToHex(result.slice(192, 256))).toBe(block2.toLowerCase());
+        expect(bytesToHex(result.slice(256, 320))).toBe(block3.toLowerCase());
+        expect(bytesToHex(result.slice(448, 512))).toBe(block4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLocaleLowerCase());
+        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
     });
 
     test('Set 6, vector#0', () => {
@@ -254,16 +254,16 @@ describe('Salsa20', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(131072)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(65472, 65536))).toBe(block2.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(65536, 65600))).toBe(block3.toLocaleLowerCase());
-        expect(bytesToHex(result.slice(131008, 131072))).toBe(block4.toLocaleLowerCase());
+        expect(bytesToHex(result.slice(0, 64))).toBe(block1.toLowerCase());
+        expect(bytesToHex(result.slice(65472, 65536))).toBe(block2.toLowerCase());
+        expect(bytesToHex(result.slice(65536, 65600))).toBe(block3.toLowerCase());
+        expect(bytesToHex(result.slice(131008, 131072))).toBe(block4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 131072; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLocaleLowerCase());
+        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
     });
 });
