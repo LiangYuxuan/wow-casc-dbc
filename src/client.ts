@@ -27,6 +27,20 @@ interface ClientPreloadData {
     rootFile: ReturnType<typeof parseRootFile>,
 }
 
+interface FileFetchResultFull {
+    type: 'full',
+    buffer: Buffer,
+    blocks: [],
+}
+
+interface FileFetchResultPartial {
+    type: 'partial',
+    buffer: Buffer,
+    blocks: ReturnType<BLTEReader['processBytes']>,
+}
+
+type FileFetchResult = FileFetchResultFull | FileFetchResultPartial;
+
 export default class CASCClient {
     public readonly region: string;
 
@@ -152,22 +166,41 @@ export default class CASCClient {
         return rootFile.fileDataID2CKey.get(fileDataID);
     }
 
-    async getFileByContentKey(contentKey: string): Promise<Buffer> {
+    async getFileByContentKey(
+        contentKey: string,
+        allowMissingKey = false,
+    ): Promise<FileFetchResult> {
         assert(this.preload, 'Client not initialized');
 
-        const { prefixes, encoding } = this.preload;
+        const { prefixes, encoding, archives } = this.preload;
         const eKeys = encoding.cKey2EKey.get(contentKey);
         assert(eKeys, `Failing to find encoding key for ${contentKey}`);
 
         const eKey = typeof eKeys === 'string' ? eKeys : eKeys[0];
-        const blte = await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig, 'data');
+
+        const archive = archives.get(eKey);
+        const blte = archive
+            ? await getDataFile(prefixes, archive.key, 'data', this.version.BuildConfig, 'data', archive.offset, archive.size)
+            : await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig, 'data');
 
         const reader = new BLTEReader(blte, eKey);
-        reader.processBytes();
+        const blocks = reader.processBytes(allowMissingKey);
 
-        const hash = crypto.createHash('md5').update(reader.buffer).digest('hex');
-        assert(hash === contentKey, `Invalid content key: expected ${contentKey}, got ${hash}`);
+        if (blocks.length === 0) {
+            const hash = crypto.createHash('md5').update(reader.buffer).digest('hex');
+            assert(hash === contentKey, `Invalid hash: expected ${contentKey}, got ${hash}`);
 
-        return reader.buffer;
+            return {
+                type: 'full',
+                buffer: reader.buffer,
+                blocks: [],
+            };
+        }
+
+        return {
+            type: 'partial',
+            buffer: reader.buffer,
+            blocks,
+        };
     }
 }
