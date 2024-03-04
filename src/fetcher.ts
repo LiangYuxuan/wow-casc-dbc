@@ -121,14 +121,14 @@ export const getDataFile = async (
     const cacheBuffer = await getFileCache(file);
 
     if (cacheBuffer) {
-        if (partialOffset !== undefined && partialLength !== undefined) {
+        if (name === undefined && partialOffset !== undefined && partialLength !== undefined) {
             return cacheBuffer.subarray(partialOffset, partialOffset + partialLength);
         }
         return cacheBuffer;
     }
 
     const downloadBuffer = await downloadFile(prefixes, 'data', key, partialOffset, partialLength);
-    if (partialOffset === undefined && partialLength === undefined) {
+    if ((partialOffset === undefined && partialLength === undefined) || name) {
         await fs.mkdir(path.resolve(CACHE_ROOT, dir), { recursive: true });
         await fs.writeFile(path.resolve(CACHE_ROOT, file), downloadBuffer);
 

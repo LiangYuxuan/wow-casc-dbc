@@ -180,8 +180,8 @@ export default class CASCClient {
 
         const archive = archives.get(eKey);
         const blte = archive
-            ? await getDataFile(prefixes, archive.key, 'data', this.version.BuildConfig, 'data', archive.offset, archive.size)
-            : await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig, 'data');
+            ? await getDataFile(prefixes, archive.key, 'data', this.version.BuildConfig, eKey, archive.offset, archive.size)
+            : await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig);
 
         const reader = new BLTEReader(blte, eKey);
         const blocks = reader.processBytes(allowMissingKey);
