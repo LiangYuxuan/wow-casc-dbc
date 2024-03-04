@@ -3,9 +3,7 @@
 import assert from 'node:assert';
 
 export default class Salsa20 {
-    private static readonly fixed = new Uint32Array([
-        0x61707865, 0x3320646e, 0x79622d32, 0x6b206574,
-    ]);
+    private readonly fixed: Uint32Array;
 
     private readonly key: Uint32Array;
 
@@ -20,13 +18,27 @@ export default class Salsa20 {
     private position = 0;
 
     constructor(key: Uint8Array, nonce: Uint8Array) {
-        assert(key.length === 32, 'Salsa20 requires 256-bit key');
+        assert(key.length === 32 || key.length === 16, 'Salsa20 requires 128-bit or 256-bit key');
         assert(nonce.length === 8, 'Salsa20 requires 64-bit nonce');
 
         this.key = new Uint32Array(8);
         const keyView = new DataView(key.buffer);
-        for (let i = 0; i < 8; i += 1) {
-            this.key[i] = keyView.getUint32(i * 4, true);
+        if (key.length === 32) {
+            for (let i = 0; i < 8; i += 1) {
+                this.key[i] = keyView.getUint32(i * 4, true);
+            }
+            this.fixed = new Uint32Array([
+                0x61707865, 0x3320646e, 0x79622d32, 0x6b206574,
+            ]);
+        } else {
+            for (let i = 0; i < 4; i += 1) {
+                const word = keyView.getUint32(i * 4, true);
+                this.key[i] = word;
+                this.key[i + 4] = word;
+            }
+            this.fixed = new Uint32Array([
+                0x61707865, 0x3120646e, 0x79622d36, 0x6b206574,
+            ]);
         }
 
         this.nonce = new Uint32Array(2);
@@ -56,10 +68,10 @@ export default class Salsa20 {
 
     private generateBlock() {
         const init = new Uint32Array([
-            Salsa20.fixed[0], this.key[0], this.key[1], this.key[2],
-            this.key[3], Salsa20.fixed[1], this.nonce[0], this.nonce[1],
-            this.counter[0], this.counter[1], Salsa20.fixed[2], this.key[4],
-            this.key[5], this.key[6], this.key[7], Salsa20.fixed[3],
+            this.fixed[0], this.key[0], this.key[1], this.key[2],
+            this.key[3], this.fixed[1], this.nonce[0], this.nonce[1],
+            this.counter[0], this.counter[1], this.fixed[2], this.key[4],
+            this.key[5], this.key[6], this.key[7], this.fixed[3],
         ]);
         this.state = new Uint32Array(init);
 
