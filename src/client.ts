@@ -15,7 +15,7 @@ import parseEncodingFile from './parsers/encodingFile.ts';
 import parseRootFile, { FileInfo } from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
 import getFileDataIDByNameRemote from './listfile.ts';
-import BLTEReader from './blte.ts';
+import BLTEReader, { MissingKeyBlock } from './blte.ts';
 import { resolveCDNHost, asyncQueue, formatFileSize } from './utils.ts';
 
 import type { Version } from './parsers/productConfig.ts';
@@ -36,7 +36,7 @@ interface FileFetchResultFull {
 interface FileFetchResultPartial {
     type: 'partial',
     buffer: Buffer,
-    blocks: ReturnType<BLTEReader['processBytes']>,
+    blocks: MissingKeyBlock[],
 }
 
 type FileFetchResult = FileFetchResultFull | FileFetchResultPartial;

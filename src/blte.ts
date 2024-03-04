@@ -11,6 +11,11 @@ interface Block {
     hash: string,
 }
 
+export interface MissingKeyBlock {
+    offset: number,
+    size: number,
+}
+
 const BLTE_MAGIC = 0x424c5445;
 const ENC_TYPE_SALSA20 = 0x53;
 const EMPTY_HASH = '00000000000000000000000000000000';
@@ -141,8 +146,8 @@ export default class BLTEReader {
         }
     }
 
-    processBytes(allowMissingKey = false, size = Infinity) {
-        const missingKeyBlocks: { offset: number, size: number }[] = [];
+    processBytes(allowMissingKey = false, size = Infinity): MissingKeyBlock[] {
+        const missingKeyBlocks: MissingKeyBlock[] = [];
 
         while (
             this.processedBlock < this.blocks.length
