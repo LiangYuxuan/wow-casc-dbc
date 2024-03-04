@@ -1,3 +1,5 @@
+import assert from 'node:assert';
+
 const normalizeKey = (key: string): string => key
     .split('-')
     .map((part, index) => (
@@ -15,9 +17,7 @@ const parseConfig = (text: string): Record<string, string> => {
         .filter((line) => line.trim().length !== 0 && !line.startsWith('#'))
         .forEach((line) => {
             const match = line.match(/([^\s]+)\s?=\s?(.*)/);
-            if (match === null) {
-                throw new Error('Invalid token encountered parsing CDN config');
-            }
+            assert(match !== null, 'Invalid token encountered parsing CDN config');
 
             const [key, value] = match.slice(1);
             entries[normalizeKey(key)] = value;

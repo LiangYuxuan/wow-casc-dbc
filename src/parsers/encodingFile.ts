@@ -35,9 +35,7 @@ const parseEncodingFile = (inputBuffer: Buffer, eKey: string, cKey: string): Enc
     assert(encodingHash === cKey, `Invalid encoding hash: expected ${cKey}, got ${encodingHash}`);
 
     const magic = buffer.readUInt16BE(MAGIC_OFFSET);
-    if (magic !== ENC_MAGIC) {
-        throw new Error(`Invalid encoding magic: ${magic}`);
-    }
+    assert(magic === ENC_MAGIC, `Invalid encoding magic: ${magic}`);
 
     const version = buffer.readUInt8(VERSION_OFFSET);
     const hashSizeCKey = buffer.readUInt8(HASH_SIZE_CKEY_OFFSET);
