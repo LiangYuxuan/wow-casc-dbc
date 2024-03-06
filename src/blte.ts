@@ -127,7 +127,7 @@ export default class BLTEReader {
                 for (let i = 0; i < 8; i += 1) {
                     const byte = ivBuffer.byteLength > i ? ivBuffer.readUInt8(i) : undefined;
                     // eslint-disable-next-line no-bitwise
-                    iv[i] = byte ? (byte ^ ((blockIndex << (8 * i)) & 0xff)) : 0x00;
+                    iv[i] = byte ? (byte ^ ((blockIndex >> (8 * i)) & 0xff)) : 0x00;
                 }
 
                 const handler = new Salsa20(key, iv);
