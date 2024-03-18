@@ -1,7 +1,6 @@
 import assert from 'node:assert';
 import crypto from 'node:crypto';
 
-import { recordLog, LogLevel } from './logger.ts';
 import {
     getProductVersions,
     getProductCDNs,
@@ -41,6 +40,15 @@ interface FileFetchResultPartial {
 
 type FileFetchResult = FileFetchResultFull | FileFetchResultPartial;
 
+enum LogLevel {
+    error = 0,
+    warn = 1,
+    info = 2,
+    debug = 3,
+}
+
+const textLogLevel = ['ERROR', 'WARN', 'INFO', 'DEBUG'] as const;
+
 export default class CASCClient {
     public readonly region: string;
 
@@ -56,40 +64,57 @@ export default class CASCClient {
         return versions.find((version) => version.Region === region);
     }
 
-    constructor(region: string, product: string, version: Version) {
+    public static LogLevel = LogLevel;
+
+    private currentLogLevel: LogLevel;
+
+    constructor(region: string, product: string, version: Version, logLevel = LogLevel.info) {
         this.region = region;
         this.product = product;
         this.version = version;
+        this.currentLogLevel = logLevel;
+    }
+
+    private log(level: LogLevel, message: unknown): void {
+        if (level <= this.currentLogLevel) {
+            if (level >= LogLevel.error) {
+                // eslint-disable-next-line no-console
+                console.error(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
+            } else {
+                // eslint-disable-next-line no-console
+                console.log(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
+            }
+        }
     }
 
     async init(): Promise<void> {
-        recordLog(LogLevel.info, 'Preloading remote CASC build:');
-        recordLog(LogLevel.info, this.version);
+        this.log(LogLevel.info, 'Preloading remote CASC build:');
+        this.log(LogLevel.info, this.version);
 
-        recordLog(LogLevel.info, 'Fetching CDN configuration...');
+        this.log(LogLevel.info, 'Fetching CDN configuration...');
         const serverConfigText = await getProductCDNs(this.region, this.product);
         const serverConfig = parseProductCDNs(serverConfigText).find(
             (config) => config.Name === this.region,
         );
         assert(serverConfig, 'No server config found');
 
-        recordLog(LogLevel.info, 'Locating fastest CDN server...');
+        this.log(LogLevel.info, 'Locating fastest CDN server...');
         const prefixes = await resolveCDNHost(
             serverConfig.Hosts.split(' '),
             serverConfig.Path,
         );
-        recordLog(LogLevel.info, 'Resolved CDN servers:');
+        this.log(LogLevel.info, 'Resolved CDN servers:');
         prefixes.forEach((prefix) => {
-            recordLog(LogLevel.info, prefix);
+            this.log(LogLevel.info, prefix);
         });
 
-        recordLog(LogLevel.info, 'Fetching build configurations...');
+        this.log(LogLevel.info, 'Fetching build configurations...');
         const cdnConfigText = await getConfigFile(prefixes, this.version.CDNConfig);
         const cdnConfig = parseCDNConfig(cdnConfigText);
         const buildConfigText = await getConfigFile(prefixes, this.version.BuildConfig);
         const buildConfig = parseBuildConfig(buildConfigText);
 
-        recordLog(LogLevel.info, 'Loading archives...');
+        this.log(LogLevel.info, 'Loading archives...');
         const archiveKeys = cdnConfig.archives.split(' ');
         const archiveCount = archiveKeys.length;
         const archiveTotalSize = cdnConfig.archivesIndexSize
@@ -109,31 +134,31 @@ export default class CASCClient {
                 )
             ).flatMap((e) => [...e]),
         );
-        recordLog(
+        this.log(
             LogLevel.info,
             `Loaded ${archiveCount} archives (${archives.size} entries, ${formatFileSize(archiveTotalSize)})`,
         );
 
-        recordLog(LogLevel.info, 'Loading encoding table...');
+        this.log(LogLevel.info, 'Loading encoding table...');
         const [encodingCKey, encodingEKey] = buildConfig.encoding.split(' ');
         const encodingBuffer = await getDataFile(prefixes, encodingEKey, 'build', this.version.BuildConfig, 'encoding');
-        recordLog(LogLevel.info, `Loaded encoding table (${formatFileSize(encodingBuffer.byteLength)})`);
+        this.log(LogLevel.info, `Loaded encoding table (${formatFileSize(encodingBuffer.byteLength)})`);
 
-        recordLog(LogLevel.info, 'Parsing encoding table...');
+        this.log(LogLevel.info, 'Parsing encoding table...');
         const encoding = parseEncodingFile(encodingBuffer, encodingEKey, encodingCKey);
-        recordLog(LogLevel.info, `Parsed encoding table (${encoding.cKey2EKey.size} entries)`);
+        this.log(LogLevel.info, `Parsed encoding table (${encoding.cKey2EKey.size} entries)`);
 
-        recordLog(LogLevel.info, 'Loading root table...');
+        this.log(LogLevel.info, 'Loading root table...');
         const rootCKey = buildConfig.root;
         const rootEKeys = encoding.cKey2EKey.get(rootCKey);
         assert(rootEKeys, 'Failing to find EKey for root table.');
         const rootEKey = typeof rootEKeys === 'string' ? rootEKeys : rootEKeys[0];
         const rootBuffer = await getDataFile(prefixes, rootEKey, 'build', this.version.BuildConfig, 'root');
-        recordLog(LogLevel.info, `Loaded root table (${formatFileSize(rootBuffer.byteLength)})`);
+        this.log(LogLevel.info, `Loaded root table (${formatFileSize(rootBuffer.byteLength)})`);
 
-        recordLog(LogLevel.info, 'Parsing root file...');
+        this.log(LogLevel.info, 'Parsing root file...');
         const rootFile = parseRootFile(rootBuffer, rootEKey, rootCKey);
-        recordLog(LogLevel.info, `Parsed root file (${rootFile.fileDataID2CKey.size} entries, ${rootFile.nameHash2FileDataID.size} hashes)`);
+        this.log(LogLevel.info, `Parsed root file (${rootFile.fileDataID2CKey.size} entries, ${rootFile.nameHash2FileDataID.size} hashes)`);
 
         this.preload = {
             prefixes,

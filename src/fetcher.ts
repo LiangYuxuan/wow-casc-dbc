@@ -3,8 +3,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
 
-import { recordLog, LogLevel } from './logger.ts';
-
 const USER_AGENT = 'node-wow-casc-dbc';
 
 const CACHE_ROOT = path.resolve('cache');
@@ -80,13 +78,11 @@ const downloadFile = (
     const urls = prefixes.map((prefix) => `${prefix}/${type}/${formatCDNKey(key)}`);
 
     return urls
-        .reduce((prev, url, index) => prev
-            .catch((err) => {
-                if (index > 0) {
-                    recordLog(LogLevel.warn, (err as Error).message);
-                }
-                return requestData(url, partialOffset, partialLength);
-            }), Promise.reject<Buffer>(new Error('')));
+        .reduce(
+            (prev, url) => prev
+                .catch(() => requestData(url, partialOffset, partialLength)),
+            Promise.reject<Buffer>(new Error('')),
+        );
 };
 
 const getFileCache = async (file: string): Promise<Buffer | undefined> => {
