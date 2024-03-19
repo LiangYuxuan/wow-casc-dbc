@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
 
+import Store from './store.ts';
+
 const USER_AGENT = 'node-wow-casc-dbc';
 
 const CACHE_ROOT = path.resolve('cache');
@@ -15,17 +17,7 @@ const CACHE_DIRS = {
 
 const CACHE_INTEGRITY_FILE = path.resolve(CACHE_ROOT, 'integrity.json');
 
-const cacheIntegrity = await (async () => {
-    try {
-        const file = await fs.readFile(CACHE_INTEGRITY_FILE, 'utf-8');
-        const result = JSON.parse(file) as Record<string, string | undefined>;
-        return result;
-    } catch {
-        return {} as Record<string, string | undefined>;
-    }
-})();
-
-const saveIntegrity = async () => fs.writeFile(CACHE_INTEGRITY_FILE, JSON.stringify(cacheIntegrity), 'utf-8');
+const cacheIntegrity = new Store<string, string>(CACHE_INTEGRITY_FILE);
 
 const formatCDNKey = (key: string): string => `${key.substring(0, 2)}/${key.substring(2, 4)}/${key}`;
 
@@ -86,7 +78,7 @@ const downloadFile = (
 };
 
 const getFileCache = async (file: string): Promise<Buffer | undefined> => {
-    const integrity = cacheIntegrity[file];
+    const integrity = await cacheIntegrity.get(file);
     if (integrity) {
         try {
             const buffer = await fs.readFile(path.resolve(CACHE_ROOT, file));
@@ -129,8 +121,7 @@ export const getDataFile = async (
         await fs.writeFile(path.resolve(CACHE_ROOT, file), downloadBuffer);
 
         const hash = crypto.createHash('sha256').update(downloadBuffer).digest('hex');
-        cacheIntegrity[file] = hash;
-        await saveIntegrity();
+        await cacheIntegrity.set(file, hash);
     }
 
     return downloadBuffer;
