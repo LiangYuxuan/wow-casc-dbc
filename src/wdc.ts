@@ -180,7 +180,7 @@ export default class WDCReader {
 
     public readonly copyTable = new Map<number, number>();
 
-    constructor(buffer: Buffer, blocks: MissingKeyBlock[]) {
+    constructor(buffer: Buffer, blocks: MissingKeyBlock[] = []) {
         const magic = buffer.readUInt32BE(0);
         // const version = buffer.readUInt32LE(4);
         // const schema = buffer.toString('ascii', 8, 136);
