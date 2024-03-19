@@ -11,7 +11,7 @@ import { parseProductVersions, parseProductCDNs } from './parsers/productConfig.
 import { parseCDNConfig, parseBuildConfig } from './parsers/config.ts';
 import parseArchiveIndex from './parsers/archiveIndex.ts';
 import parseEncodingFile from './parsers/encodingFile.ts';
-import parseRootFile from './parsers/rootFile.ts';
+import parseRootFile, { LocaleFlags } from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
 import BLTEReader from './blte.ts';
 import { resolveCDNHost, asyncQueue, formatFileSize } from './utils.ts';
@@ -66,6 +66,8 @@ export default class CASCClient {
         const versions = parseProductVersions(versionsText);
         return versions.find((version) => version.Region === region);
     }
+
+    public static LocaleFlags = LocaleFlags;
 
     public static LogLevel = LogLevel;
 
