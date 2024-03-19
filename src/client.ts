@@ -14,6 +14,7 @@ import parseEncodingFile from './parsers/encodingFile.ts';
 import parseRootFile, { LocaleFlags } from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
 import BLTEReader from './blte.ts';
+import WDCReader from './wdc.ts';
 import { resolveCDNHost, asyncQueue, formatFileSize } from './utils.ts';
 
 import type { Version } from './parsers/productConfig.ts';
@@ -58,6 +59,8 @@ export default class CASCClient {
     public readonly version: Version;
 
     public readonly name2FileDataID = new Map<string, number>();
+
+    public readonly keys = new Map<string, Uint8Array>();
 
     public preload?: ClientPreloadData;
 
@@ -176,10 +179,65 @@ export default class CASCClient {
     async loadRemoteListFile(): Promise<void> {
         const url = 'https://github.com/wowdev/wow-listfile/releases/download/202402031841/community-listfile.csv';
         const text = await (await fetch(url)).text();
-        const lines = text.split('\n');
+        const lines = text.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
+
         lines.forEach((line) => {
             const [fileDataID, name] = line.split(';');
             this.name2FileDataID.set(name.trim(), parseInt(fileDataID.trim(), 10));
+        });
+    }
+
+    async loadRemoteTACTKeys(): Promise<void> {
+        const url = 'https://raw.githubusercontent.com/wowdev/TACTKeys/master/WoW.txt';
+        const text = await (await fetch(url)).text();
+        const lines = text.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
+
+        lines.forEach((line) => {
+            const [keyName, keyHex] = line.split(' ');
+
+            assert(keyName.length === 16, `Invalid keyName length: ${keyName.length}`);
+            assert(keyHex.length === 32, `Invalid key length: ${keyHex.length}`);
+
+            const key = Uint8Array.from(Buffer.from(keyHex, 'hex'));
+
+            this.keys.set(keyName.toLowerCase(), key);
+        });
+    }
+
+    async loadTACTKeys(): Promise<void> {
+        const keysCKeys = this.getContentKeysByFileDataID(1302850);
+        const lookupCKeys = this.getContentKeysByFileDataID(1302851);
+
+        assert(keysCKeys?.[0], 'Failing to find dbfilesclient/tactkey.db2');
+        assert(lookupCKeys?.[0], 'Failing to find dbfilesclient/tactkeylookup.db2');
+
+        const [keysResult, lookupResult] = await Promise.all([
+            this.getFileByContentKey(keysCKeys[0].cKey),
+            this.getFileByContentKey(lookupCKeys[0].cKey),
+        ]);
+
+        const keysReader = new WDCReader(keysResult.buffer, keysResult.blocks);
+        const lookupReader = new WDCReader(lookupResult.buffer, lookupResult.blocks);
+
+        [...lookupReader.rows.keys()].forEach((keyID) => {
+            const lookupRow = lookupReader.rows.get(keyID);
+            const keyRow = keysReader.rows.get(keyID);
+
+            if (keyRow) {
+                assert(Array.isArray(lookupRow) && lookupRow[0], `Invalid TACTKeyLookup table row at id ${keyID}`);
+                assert(Array.isArray(keyRow) && keyRow[0], `Invalid TACTKey table row at id ${keyID}`);
+
+                const keyName = lookupRow[0].data.toString(16).padStart(16, '0');
+                const keyHexLE = keyRow[0].data.toString(16).padStart(32, '0');
+
+                assert(keyName.length === 16, `Invalid keyName length: ${keyName.length}`);
+                assert(keyHexLE.length === 32, `Invalid key length: ${keyHexLE.length}`);
+
+                const keyHex = [...keyHexLE.matchAll(/.{2}/g)].map((v) => v[0]).reverse().join('');
+                const key = Uint8Array.from(Buffer.from(keyHex, 'hex'));
+
+                this.keys.set(keyName.toLowerCase(), key);
+            }
         });
     }
 
@@ -218,7 +276,7 @@ export default class CASCClient {
             ? await getDataFile(prefixes, archive.key, 'data', this.version.BuildConfig, eKey, archive.offset, archive.size)
             : await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig);
 
-        const reader = new BLTEReader(blte, eKey);
+        const reader = new BLTEReader(blte, eKey, this.keys);
         const blocks = reader.processBytes(allowMissingKey);
 
         if (blocks.length === 0) {

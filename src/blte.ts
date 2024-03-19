@@ -3,7 +3,6 @@ import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 
 import Salsa20 from './salsa20.ts';
-import { getKeyByKeyName } from './key.ts';
 
 interface Block {
     compressedSize: number,
@@ -14,6 +13,8 @@ interface Block {
 export interface MissingKeyBlock {
     offset: number,
     size: number,
+    blockIndex: number,
+    keyName: string,
 }
 
 const BLTE_MAGIC = 0x424c5445;
@@ -27,13 +28,16 @@ export default class BLTEReader {
 
     public readonly blocks: Block[] = [];
 
+    public readonly keys: Map<string, Uint8Array>;
+
     private processedBlock = 0;
 
     private processedOffset = 0;
 
-    constructor(buffer: Buffer, eKey: string) {
+    constructor(buffer: Buffer, eKey: string, keys = new Map<string, Uint8Array>()) {
         this.blte = buffer;
         this.buffer = Buffer.alloc(0);
+        this.keys = keys;
 
         const size = buffer.byteLength;
         assert(size >= 8, `[BLTE]: Invalid size: ${size} < 8`);
@@ -92,7 +96,7 @@ export default class BLTEReader {
         blockBuffer: Buffer,
         blockIndex: number,
         allowMissingKey: boolean,
-    ): Buffer | undefined {
+    ): Buffer | string {
         const flag = blockBuffer.readUInt8(0);
         switch (flag) {
             case 0x45: { // Encrypted
@@ -101,7 +105,7 @@ export default class BLTEReader {
                 const keyNameLength = blockBuffer.readUInt8(offset);
                 offset += 1;
 
-                const keyName = blockBuffer.toString('hex', offset, offset + keyNameLength);
+                const keyNameBE = blockBuffer.toString('hex', offset, offset + keyNameLength);
                 offset += keyNameLength;
 
                 const ivLength = blockBuffer.readUInt8(offset);
@@ -115,10 +119,11 @@ export default class BLTEReader {
 
                 assert(encryptType === ENC_TYPE_SALSA20, `[BLTE]: Invalid encrypt type: ${encryptType}`);
 
-                const key = getKeyByKeyName(keyName);
+                const keyName = [...keyNameBE.matchAll(/.{2}/g)].map((v) => v[0]).reverse().join('').toLowerCase();
+                const key = this.keys.get(keyName);
                 if (!key) {
                     if (allowMissingKey) {
-                        return undefined;
+                        return keyName;
                     }
                     throw new Error(`[BLTE]: Missing key: ${keyName}`);
                 }
@@ -166,7 +171,7 @@ export default class BLTEReader {
             }
 
             const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
-            if (buffer) {
+            if (buffer instanceof Buffer) {
                 assert(buffer.byteLength === block.decompressedSize, `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize}, got ${buffer.byteLength}`);
 
                 this.buffer = Buffer.concat([this.buffer, buffer]);
@@ -174,6 +179,8 @@ export default class BLTEReader {
                 missingKeyBlocks.push({
                     offset: this.buffer.byteLength,
                     size: block.decompressedSize,
+                    blockIndex,
+                    keyName: buffer,
                 });
 
                 this.buffer = Buffer.concat([this.buffer, Buffer.alloc(block.decompressedSize)]);
