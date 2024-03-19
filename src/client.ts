@@ -11,12 +11,14 @@ import { parseProductVersions, parseProductCDNs } from './parsers/productConfig.
 import { parseCDNConfig, parseBuildConfig } from './parsers/config.ts';
 import parseArchiveIndex from './parsers/archiveIndex.ts';
 import parseEncodingFile from './parsers/encodingFile.ts';
-import parseRootFile, { FileInfo } from './parsers/rootFile.ts';
+import parseRootFile from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
-import BLTEReader, { MissingKeyBlock } from './blte.ts';
+import BLTEReader from './blte.ts';
 import { resolveCDNHost, asyncQueue, formatFileSize } from './utils.ts';
 
 import type { Version } from './parsers/productConfig.ts';
+import type { FileInfo } from './parsers/rootFile.ts';
+import type { MissingKeyBlock } from './blte.ts';
 
 interface ClientPreloadData {
     prefixes: string[],
