@@ -13,7 +13,6 @@ import parseArchiveIndex from './parsers/archiveIndex.ts';
 import parseEncodingFile from './parsers/encodingFile.ts';
 import parseRootFile, { FileInfo } from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
-import getFileDataIDByNameRemote from './listfile.ts';
 import BLTEReader, { MissingKeyBlock } from './blte.ts';
 import { resolveCDNHost, asyncQueue, formatFileSize } from './utils.ts';
 
@@ -55,6 +54,8 @@ export default class CASCClient {
     public readonly product: string;
 
     public readonly version: Version;
+
+    public readonly name2FileDataID = new Map<string, number>();
 
     public preload?: ClientPreloadData;
 
@@ -168,19 +169,24 @@ export default class CASCClient {
         };
     }
 
-    async getFileDataIDByName(name: string, useRemote = false): Promise<number | undefined> {
+    async loadRemoteListFile(): Promise<void> {
+        const url = 'https://github.com/wowdev/wow-listfile/releases/download/202402031841/community-listfile.csv';
+        const text = await (await fetch(url)).text();
+        const lines = text.split('\n');
+        lines.forEach((line) => {
+            const [fileDataID, name] = line.split(';');
+            this.name2FileDataID.set(name.trim(), parseInt(fileDataID.trim(), 10));
+        });
+    }
+
+    getFileDataIDByName(name: string): number | undefined {
         assert(this.preload, 'Client not initialized');
 
         const { rootFile } = this.preload;
         const { nameHash2FileDataID } = rootFile;
 
         const nameHash = getNameHash(name);
-        const fileDataID = nameHash2FileDataID.get(nameHash);
-        if (!useRemote || fileDataID) {
-            return fileDataID;
-        }
-
-        return getFileDataIDByNameRemote(name);
+        return nameHash2FileDataID.get(nameHash) ?? this.name2FileDataID.get(name);
     }
 
     getContentKeysByFileDataID(fileDataID: number): FileInfo[] | undefined {
