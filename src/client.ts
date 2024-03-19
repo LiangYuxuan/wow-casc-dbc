@@ -66,17 +66,17 @@ export default class CASCClient {
 
     public static LogLevel = LogLevel;
 
-    private currentLogLevel: LogLevel;
+    public logLevel: LogLevel;
 
     constructor(region: string, product: string, version: Version, logLevel = LogLevel.info) {
         this.region = region;
         this.product = product;
         this.version = version;
-        this.currentLogLevel = logLevel;
+        this.logLevel = logLevel;
     }
 
     private log(level: LogLevel, message: unknown): void {
-        if (level <= this.currentLogLevel) {
+        if (level <= this.logLevel) {
             if (level >= LogLevel.error) {
                 // eslint-disable-next-line no-console
                 console.error(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
