@@ -149,7 +149,7 @@ const readBitpackedValue = (buffer: Buffer, fieldOffsetBits: number, fieldSizeBi
 
     while (remain > 0) {
         const byteLength = Math.min(remain, 6);
-        const offset = offsetBytes + sizeBytes - byteLength;
+        const offset = offsetBytes + remain - byteLength;
         const rawValue = buffer.readUIntLE(offset, byteLength);
 
         value = (value << BigInt(byteLength * 8)) | BigInt(rawValue);
