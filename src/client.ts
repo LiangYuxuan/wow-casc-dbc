@@ -11,7 +11,7 @@ import { parseProductVersions, parseProductCDNs } from './parsers/productConfig.
 import { parseCDNConfig, parseBuildConfig } from './parsers/config.ts';
 import parseArchiveIndex from './parsers/archiveIndex.ts';
 import parseEncodingFile from './parsers/encodingFile.ts';
-import parseRootFile, { LocaleFlags } from './parsers/rootFile.ts';
+import parseRootFile, { LocaleFlags, ContentFlags } from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
 import BLTEReader from './blte.ts';
 import WDCReader from './wdc.ts';
@@ -70,6 +70,8 @@ export default class CASCClient {
     }
 
     public static LocaleFlags = LocaleFlags;
+
+    public static ContentFlags = ContentFlags;
 
     public static LogLevel = LogLevel;
 
