@@ -131,16 +131,24 @@ interface Section {
     relationshipMap: Map<number, number>,
 }
 
-const readBitpackedValue = (buffer: Buffer, fieldOffsetBits: number, fieldSizeBits: number) => {
+const readBitpackedValue = (
+    buffer: Buffer,
+    fieldOffsetBits: number,
+    fieldSizeBits: number,
+    signed = false,
+) => {
     const offsetBytes = fieldOffsetBits >>> 3;
     const bitOffset = fieldOffsetBits & 0x7;
     const sizeBytes = Math.ceil((fieldSizeBits + bitOffset) / 8);
-    const bitMask = (1n << BigInt(fieldSizeBits)) - 1n;
 
     if (sizeBytes <= 6) {
         // safe to be number
         const rawValue = buffer.readUIntLE(offsetBytes, sizeBytes);
-        return Number(BigInt(rawValue >>> bitOffset) & bitMask);
+        return Number(
+            signed
+                ? BigInt.asIntN(fieldSizeBits, BigInt(rawValue >>> bitOffset))
+                : BigInt.asUintN(fieldSizeBits, BigInt(rawValue >>> bitOffset)),
+        );
     }
 
     // need to be bigint
@@ -156,7 +164,9 @@ const readBitpackedValue = (buffer: Buffer, fieldOffsetBits: number, fieldSizeBi
         remain -= byteLength;
     }
 
-    return (value >> BigInt(bitOffset)) & bitMask;
+    return signed
+        ? BigInt.asIntN(fieldSizeBits, value >> BigInt(bitOffset))
+        : BigInt.asUintN(fieldSizeBits, value >> BigInt(bitOffset));
 };
 
 export default class WDCReader {
@@ -602,6 +612,7 @@ export default class WDCReader {
                                     recordBuffer,
                                     fieldInfo.fieldOffsetBits,
                                     fieldInfo.fieldSizeBits,
+                                    fieldInfo.storageType === 'bitpackedSigned',
                                 );
 
                                 assert(typeof value === 'number', 'Bitpacked value must be a number');
