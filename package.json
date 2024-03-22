@@ -23,7 +23,10 @@
     "test": "jest"
   },
   "homepage": "https://github.com/LiangYuxuan/wow-casc-dbc#readme",
-  "repository": "github:LiangYuxuan/wow-casc-dbc",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LiangYuxuan/wow-casc-dbc.git"
+  },
   "keywords": [
     "blizzard",
     "wow",
