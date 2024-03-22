@@ -40,10 +40,10 @@ export default class BLTEReader {
         this.keys = keys;
 
         const size = buffer.byteLength;
-        assert(size >= 8, `[BLTE]: Invalid size: ${size} < 8`);
+        assert(size >= 8, `[BLTE]: Invalid size: ${size.toString()} < 8`);
 
         const magic = buffer.readUInt32BE(0);
-        assert(magic === BLTE_MAGIC, `[BLTE]: Invalid magic: ${magic}`);
+        assert(magic === BLTE_MAGIC, `[BLTE]: Invalid magic: ${magic.toString(16).padStart(8, '0')}`);
 
         const headerSize = buffer.readUInt32BE(4);
         if (headerSize === 0) {
@@ -63,18 +63,18 @@ export default class BLTEReader {
         const blteHash = crypto.createHash('md5').update(buffer.subarray(0, headerSize)).digest('hex');
         assert(blteHash === eKey, `[BLTE]: Invalid hash: expected ${eKey}, got ${blteHash}`);
 
-        assert(size >= 12, `[BLTE]: Invalid size: ${size} < 12`);
+        assert(size >= 12, `[BLTE]: Invalid size: ${size.toString()} < 12`);
 
         const flag = buffer.readUInt8(8);
         const numBlocks = buffer.readIntBE(9, 3);
 
-        assert(numBlocks > 0, `[BLTE]: Invalid number of blocks: ${numBlocks}`);
-        assert(flag === 0x0f, `[BLTE]: Invalid flag: ${flag}`);
+        assert(numBlocks > 0, `[BLTE]: Invalid number of blocks: ${numBlocks.toString()}`);
+        assert(flag === 0x0f, `[BLTE]: Invalid flag: ${flag.toString(16).padStart(2, '0')}`);
 
         const blockHeaderSize = numBlocks * 24;
-        assert(headerSize === blockHeaderSize + 12, `[BLTE]: Invalid header size: header size ${headerSize} != block header size ${blockHeaderSize} + 12`);
+        assert(headerSize === blockHeaderSize + 12, `[BLTE]: Invalid header size: header size ${headerSize.toString()} != block header size ${blockHeaderSize.toString()} + 12`);
 
-        assert(size >= headerSize, `[BLTE]: Invalid size: ${size} < ${headerSize}`);
+        assert(size >= headerSize, `[BLTE]: Invalid size: ${size.toString()} < ${headerSize.toString()}`);
 
         for (let i = 0; i < numBlocks; i += 1) {
             const offset = 12 + i * 24;
@@ -115,7 +115,7 @@ export default class BLTEReader {
                 const encryptType = buffer.readUInt8(offset);
                 offset += 1;
 
-                assert(encryptType === ENC_TYPE_SALSA20, `[BLTE]: Invalid encrypt type: ${encryptType}`);
+                assert(encryptType === ENC_TYPE_SALSA20, `[BLTE]: Invalid encrypt type: ${encryptType.toString(16).padStart(2, '0')}`);
 
                 const keyName = [...keyNameBE.matchAll(/.{2}/g)].map((v) => v[0]).reverse().join('').toLowerCase();
                 const key = this.keys.get(keyName);
@@ -148,7 +148,7 @@ export default class BLTEReader {
             case 0x5a: // Compressed
                 return zlib.inflateSync(buffer.subarray(1));
             default:
-                throw new Error(`[BLTE]: Invalid block flag: ${flag}`);
+                throw new Error(`[BLTE]: Invalid block flag: ${flag.toString(16).padStart(2, '0')}`);
         }
     }
 
@@ -176,7 +176,10 @@ export default class BLTEReader {
             if (allowMissingKey) {
                 const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
                 if (buffer instanceof Buffer) {
-                    assert(buffer.byteLength === block.decompressedSize, `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize}, got ${buffer.byteLength}`);
+                    assert(
+                        buffer.byteLength === block.decompressedSize,
+                        `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize.toString()}, got ${buffer.byteLength.toString()}`,
+                    );
 
                     this.buffer = Buffer.concat([this.buffer, buffer]);
                 } else {
@@ -195,7 +198,10 @@ export default class BLTEReader {
             } else {
                 const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
 
-                assert(buffer.byteLength === block.decompressedSize, `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize}, got ${buffer.byteLength}`);
+                assert(
+                    buffer.byteLength === block.decompressedSize,
+                    `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize.toString()}, got ${buffer.byteLength.toString()}`,
+                );
 
                 this.buffer = Buffer.concat([this.buffer, buffer]);
             }

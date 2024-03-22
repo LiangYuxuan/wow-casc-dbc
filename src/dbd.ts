@@ -229,7 +229,7 @@ export default class DBDParser {
                             column.isSigned,
                         );
                     } else {
-                        assert(!column.size || column.size === 64, `Unexpected size ${column.size} for column ${column.name}`);
+                        assert(!column.size || column.size === 64, `Unexpected size ${column.size?.toString() ?? ''} for column ${column.name}`);
 
                         if (srcSigned !== column.isSigned) {
                             data[column.name] = castBigInt64(
@@ -297,7 +297,7 @@ export default class DBDParser {
                                 values.push(Math.round(value * 100) / 100);
                                 offset += 4;
                             } else if (size > 6) {
-                                assert(size === 8, `Unexpected size ${size} for column ${column.name}`);
+                                assert(size === 8, `Unexpected size ${size.toString()} for column ${column.name}`);
 
                                 const value = column.isSigned
                                     ? buffer.readBigInt64LE(offset)

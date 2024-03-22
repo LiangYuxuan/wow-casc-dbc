@@ -145,7 +145,7 @@ export default class CASCClient {
         );
         this.log(
             LogLevel.info,
-            `Loaded ${archiveCount} archives (${archives.size} entries, ${formatFileSize(archiveTotalSize)})`,
+            `Loaded ${archiveCount.toString()} archives (${archives.size.toString()} entries, ${formatFileSize(archiveTotalSize)})`,
         );
 
         this.log(LogLevel.info, 'Loading encoding table...');
@@ -155,7 +155,7 @@ export default class CASCClient {
 
         this.log(LogLevel.info, 'Parsing encoding table...');
         const encoding = parseEncodingFile(encodingBuffer, encodingEKey, encodingCKey);
-        this.log(LogLevel.info, `Parsed encoding table (${encoding.cKey2EKey.size} entries)`);
+        this.log(LogLevel.info, `Parsed encoding table (${encoding.cKey2EKey.size.toString()} entries)`);
 
         this.log(LogLevel.info, 'Loading root table...');
         const rootCKey = buildConfig.root;
@@ -167,7 +167,7 @@ export default class CASCClient {
 
         this.log(LogLevel.info, 'Parsing root file...');
         const rootFile = parseRootFile(rootBuffer, rootEKey, rootCKey);
-        this.log(LogLevel.info, `Parsed root file (${rootFile.fileDataID2CKey.size} entries, ${rootFile.nameHash2FileDataID.size} hashes)`);
+        this.log(LogLevel.info, `Parsed root file (${rootFile.fileDataID2CKey.size.toString()} entries, ${rootFile.nameHash2FileDataID.size.toString()} hashes)`);
 
         this.preload = {
             prefixes,
@@ -196,8 +196,8 @@ export default class CASCClient {
         lines.forEach((line) => {
             const [keyName, keyHex] = line.split(' ');
 
-            assert(keyName.length === 16, `Invalid keyName length: ${keyName.length}`);
-            assert(keyHex.length === 32, `Invalid key length: ${keyHex.length}`);
+            assert(keyName.length === 16, `Invalid keyName length: ${keyName.length.toString()}`);
+            assert(keyHex.length === 32, `Invalid key length: ${keyHex.length.toString()}`);
 
             const key = Uint8Array.from(Buffer.from(keyHex, 'hex'));
 
@@ -225,14 +225,14 @@ export default class CASCClient {
             const keyRow = keysReader.rows.get(keyID);
 
             if (keyRow) {
-                assert(Array.isArray(lookupRow) && lookupRow[0], `Invalid TACTKeyLookup table row at id ${keyID}`);
-                assert(Array.isArray(keyRow) && keyRow[0], `Invalid TACTKey table row at id ${keyID}`);
+                assert(Array.isArray(lookupRow) && lookupRow[0], `Invalid TACTKeyLookup table row at id ${keyID.toString()}`);
+                assert(Array.isArray(keyRow) && keyRow[0], `Invalid TACTKey table row at id ${keyID.toString()}`);
 
                 const keyName = lookupRow[0].data.toString(16).padStart(16, '0');
                 const keyHexLE = keyRow[0].data.toString(16).padStart(32, '0');
 
-                assert(keyName.length === 16, `Invalid keyName length: ${keyName.length}`);
-                assert(keyHexLE.length === 32, `Invalid key length: ${keyHexLE.length}`);
+                assert(keyName.length === 16, `Invalid keyName length: ${keyName.length.toString()}`);
+                assert(keyHexLE.length === 32, `Invalid key length: ${keyHexLE.length.toString()}`);
 
                 const keyHex = [...keyHexLE.matchAll(/.{2}/g)].map((v) => v[0]).reverse().join('');
                 const key = Uint8Array.from(Buffer.from(keyHex, 'hex'));

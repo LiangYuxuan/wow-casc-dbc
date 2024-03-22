@@ -35,7 +35,7 @@ const parseEncodingFile = (inputBuffer: Buffer, eKey: string, cKey: string): Enc
     assert(encodingHash === cKey, `Invalid encoding hash: expected ${cKey}, got ${encodingHash}`);
 
     const magic = buffer.readUInt16BE(MAGIC_OFFSET);
-    assert(magic === ENC_MAGIC, `Invalid encoding magic: ${magic}`);
+    assert(magic === ENC_MAGIC, `Invalid encoding magic: ${magic.toString(16).padStart(4, '0')}`);
 
     const version = buffer.readUInt8(VERSION_OFFSET);
     const hashSizeCKey = buffer.readUInt8(HASH_SIZE_CKEY_OFFSET);
@@ -46,7 +46,7 @@ const parseEncodingFile = (inputBuffer: Buffer, eKey: string, cKey: string): Enc
     const eKeyPageCount = buffer.readUInt32BE(EKEY_PAGE_COUNT_OFFSET);
     const specBlockSize = buffer.readUInt32BE(SPEC_BLOCK_SIZE_OFFSET);
 
-    assert(version === 1, `Invalid encoding version: ${version}`);
+    assert(version === 1, `Invalid encoding version: ${version.toString()}`);
 
     const eSpec: string[] = [];
     let eSpecStringStart = SPEC_BLOCK_OFFSET;
@@ -76,10 +76,10 @@ const parseEncodingFile = (inputBuffer: Buffer, eKey: string, cKey: string): Enc
 
         const pageBuffer = buffer.subarray(pageOffset, pageOffset + cKeyPageSize);
         const pageHash = crypto.createHash('md5').update(pageBuffer).digest('hex');
-        assert(pageHash === pageChecksum, `Invalid ckey page ${i} checksum: expected ${pageChecksum}, got ${pageHash}`);
+        assert(pageHash === pageChecksum, `Invalid ckey page ${i.toString()} checksum: expected ${pageChecksum}, got ${pageHash}`);
 
         const pageFirstCKey = pageBuffer.toString('hex', 6, 6 + hashSizeCKey);
-        assert(pageFirstCKey === firstCKey, `Invalid ckey page ${i} first ckey: expected ${firstCKey}, got ${pageFirstCKey}`);
+        assert(pageFirstCKey === firstCKey, `Invalid ckey page ${i.toString()} first ckey: expected ${firstCKey}, got ${pageFirstCKey}`);
 
         let pagePointer = 0;
         while (pagePointer < cKeyPageSize) {
@@ -129,10 +129,10 @@ const parseEncodingFile = (inputBuffer: Buffer, eKey: string, cKey: string): Enc
 
         const pageBuffer = buffer.subarray(pageOffset, pageOffset + eKeyPageSize);
         const pageHash = crypto.createHash('md5').update(pageBuffer).digest('hex');
-        assert(pageHash === pageChecksum, `Invalid ekey page ${i} checksum: expected ${pageChecksum}, got ${pageHash}`);
+        assert(pageHash === pageChecksum, `Invalid ekey page ${i.toString()} checksum: expected ${pageChecksum}, got ${pageHash}`);
 
         const pageFirstEKey = pageBuffer.toString('hex', 0, hashSizeEKey);
-        assert(pageFirstEKey === firstEKey, `Invalid ekey page ${i} first ekey: expected ${firstEKey}, got ${pageFirstEKey}`);
+        assert(pageFirstEKey === firstEKey, `Invalid ekey page ${i.toString()} first ekey: expected ${firstEKey}, got ${pageFirstEKey}`);
 
         let pagePointer = 0;
         while (pagePointer + eKeyPageEntrySize <= eKeyPageSize) {

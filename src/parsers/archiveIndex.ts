@@ -50,7 +50,7 @@ const parseArchiveIndex = (buffer: Buffer, cKey: string): Map<string, ArchiveInd
     const numElements = buffer.readUInt32LE(versionOffset + NUM_ELEMENTS_OFFSET);
     const footerChecksum = buffer.toString('hex', versionOffset + CHECKSUM_OFFSET);
 
-    assert(version === 1, `Invalid version: ${version} in ${cKey}`);
+    assert(version === 1, `Invalid version: ${version.toString()} in ${cKey}`);
 
     const entrySize = keySize + offsetBytes + sizeBytes;
     const blockSize = blockSizeKB * 1024;
@@ -79,7 +79,7 @@ const parseArchiveIndex = (buffer: Buffer, cKey: string): Map<string, ArchiveInd
         const blockOffset = i * blockSize;
 
         const blockHash = crypto.createHash('md5').update(buffer.subarray(i * blockSize, (i + 1) * blockSize)).digest('hex').slice(0, checksumSize * 2);
-        assert(blockChecksum === blockHash, `Invalid block hash in ${cKey} at ${i}: expected ${blockChecksum}, got ${blockHash}`);
+        assert(blockChecksum === blockHash, `Invalid block hash in ${cKey} at ${i.toString()}: expected ${blockChecksum}, got ${blockHash}`);
 
         let length = 0;
         while (length < blockSize) {
@@ -97,7 +97,7 @@ const parseArchiveIndex = (buffer: Buffer, cKey: string): Map<string, ArchiveInd
         }
     }
 
-    assert(result.size === numElements, `Invalid number of elements: ${result.size} != ${numElements} in ${cKey}`);
+    assert(result.size === numElements, `Invalid number of elements: ${result.size.toString()} != ${numElements.toString()} in ${cKey}`);
 
     return result;
 };

@@ -30,7 +30,7 @@ const requestData = async (
         headers: {
             'User-Agent': USER_AGENT,
             Range: partialOffset && partialLength
-                ? `bytes=${partialOffset}-${partialOffset + partialLength - 1}`
+                ? `bytes=${partialOffset.toString()}-${(partialOffset + partialLength - 1).toString()}`
                 : 'bytes=0-',
         },
     };
@@ -40,15 +40,17 @@ const requestData = async (
             if (res.headers.location) {
                 requestData(res.headers.location, partialOffset, partialLength)
                     .then(resolve)
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             } else {
-                reject(new Error(`Failed to request ${url}, Status Code: ${res.statusCode}`));
+                reject(new Error(`Failed to request ${url}, Status Code: ${res.statusCode.toString()}`));
             }
             return;
         }
 
         if (!res.statusCode || res.statusCode < 200 || res.statusCode > 302) {
-            reject(new Error(`Failed to request ${url}, Status Code: ${res.statusCode}`));
+            reject(new Error(`Failed to request ${url}, Status Code: ${res.statusCode?.toString() ?? 'undefined'}`));
             return;
         }
 

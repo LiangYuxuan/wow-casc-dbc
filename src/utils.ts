@@ -69,6 +69,8 @@ export const asyncQueue = <T, U>(
                     .then((result) => {
                         results[index] = result;
                     })
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject)
                     .finally(() => {
                         pending -= 1;
@@ -92,7 +94,7 @@ export const asyncQueue = <T, U>(
 const JEDEC = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 // Simplified version of https://github.com/avoidwork/filesize.js
 export const formatFileSize = (input: number) => {
-    if (Number.isNaN(input)) return input;
+    if (Number.isNaN(input)) return '';
 
     let size = Number(input);
     const isNegative = size < 0;

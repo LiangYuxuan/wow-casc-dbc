@@ -213,7 +213,7 @@ export default class WDCReader {
         const palletDataSize = buffer.readUInt32LE(196);
         const sectionCount = buffer.readUInt32LE(200);
 
-        assert(magic === WDC5_MAGIC, `Invalid magic: ${magic}`);
+        assert(magic === WDC5_MAGIC, `Invalid magic: ${magic.toString(16).padStart(8, '0')}`);
 
         this.tableHash = tableHash;
         this.layoutHash = layoutHash;
@@ -329,7 +329,7 @@ export default class WDCReader {
                     });
                     break;
                 default:
-                    throw new Error(`Unknown storage type: ${storageType}`);
+                    throw new Error(`Unknown storage type: ${storageType.toString(16).padStart(8, '0')}`);
             }
         }
         this.fieldsInfo = fieldsInfo;
@@ -349,7 +349,10 @@ export default class WDCReader {
             }
         }
 
-        assert(palletDataPointer === palletDataOffset + palletDataSize, `Invalid pallet data size: ${palletDataPointer - palletDataOffset} != ${palletDataSize}`);
+        assert(
+            palletDataPointer === palletDataOffset + palletDataSize,
+            `Invalid pallet data size: ${(palletDataPointer - palletDataOffset).toString()} != ${palletDataSize.toString()}`,
+        );
 
         const commonData = new Map<number, Map<number, number>>();
         const commonDataOffset = palletDataPointer;
@@ -369,7 +372,10 @@ export default class WDCReader {
             }
         }
 
-        assert(commonDataPointer === commonDataOffset + commonDataSize, `Invalid common data size: ${commonDataPointer - commonDataOffset} != ${commonDataSize}`);
+        assert(
+            commonDataPointer === commonDataOffset + commonDataSize,
+            `Invalid common data size: ${(commonDataPointer - commonDataOffset).toString()} != ${commonDataSize.toString()}`,
+        );
 
         const encryptedIDs = new Map<number, number[]>();
         const encryptedRecordsOffset = commonDataPointer;
@@ -395,7 +401,10 @@ export default class WDCReader {
         const sectionsOffset = encryptedRecordsPointer;
         let sectionPointer = sectionsOffset;
         const sections = sectionHeaders.map((sectionHeader): Section => {
-            assert(sectionPointer === sectionHeader.fileOffset, `Invalid section offset: ${sectionPointer} != ${sectionHeader.fileOffset}`);
+            assert(
+                sectionPointer === sectionHeader.fileOffset,
+                `Invalid section offset: ${sectionPointer.toString()} != ${sectionHeader.fileOffset.toString()}`,
+            );
 
             const sectionSize = (
                 isNormal
@@ -620,7 +629,7 @@ export default class WDCReader {
                                 if (fieldInfo.storageType === 'bitpackedIndexedArray') {
                                     const fieldPalletData = palletData.get(fieldIndex);
 
-                                    assert(fieldPalletData, `No pallet data for field ${fieldIndex}`);
+                                    assert(fieldPalletData, `No pallet data for field ${fieldIndex.toString()}`);
 
                                     const data: number[] = [];
                                     const palletStart = value * fieldInfo.arrayCount;
@@ -638,7 +647,7 @@ export default class WDCReader {
                                 if (fieldInfo.storageType === 'bitpackedIndexed') {
                                     const fieldPalletData = palletData.get(fieldIndex);
 
-                                    assert(fieldPalletData, `No pallet data for field ${fieldIndex}`);
+                                    assert(fieldPalletData, `No pallet data for field ${fieldIndex.toString()}`);
 
                                     value = fieldPalletData[value];
                                 }
