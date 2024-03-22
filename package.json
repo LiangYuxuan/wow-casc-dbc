@@ -1,7 +1,7 @@
 {
   "name": "wow-casc-dbc",
-  "version": "0.0.1",
-  "description": "Accessing Blizzard's TACT and dealing with World of Warcraft CASC and DBC contents.",
+  "version": "1.0.0",
+  "description": "Fetch World of Warcraft data files from CASC and parse DBC/DB2 files.",
   "type": "module",
   "exports": {
     ".": {
