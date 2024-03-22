@@ -22,6 +22,8 @@
     "lint:fix": "eslint src/ --ext .js,.jsx,.ts,.tsx --fix",
     "test": "jest"
   },
+  "homepage": "https://github.com/LiangYuxuan/wow-casc-dbc#readme",
+  "repository": "github:LiangYuxuan/wow-casc-dbc",
   "keywords": [
     "blizzard",
     "wow",
