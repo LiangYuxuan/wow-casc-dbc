@@ -1,5 +1,5 @@
 {
-  "name": "wow-casc-dbc",
+  "name": "@rhyster/wow-casc-dbc",
   "version": "1.0.0",
   "description": "Fetch World of Warcraft data files from CASC and parse DBC/DB2 files.",
   "type": "module",
