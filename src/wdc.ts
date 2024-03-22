@@ -687,6 +687,10 @@ export default class WDCReader {
         });
     }
 
+    getAllIDs(): number[] {
+        return [...this.rows.keys(), ...this.copyTable.keys()];
+    }
+
     getRowData(id: number): ParsedField[] | SparseRow | undefined {
         const dst = this.copyTable.get(id);
         if (dst) {

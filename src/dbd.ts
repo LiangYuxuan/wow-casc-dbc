@@ -158,6 +158,10 @@ export default class DBDParser {
         });
     }
 
+    getAllIDs(): number[] {
+        return this.wdc.getAllIDs();
+    }
+
     getRowData(id: number): Record<string, ColumnData | ColumnData[]> | undefined {
         const row = this.wdc.getRowData(id);
         if (!row) {
