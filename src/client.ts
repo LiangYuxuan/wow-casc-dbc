@@ -31,7 +31,6 @@ interface ClientPreloadData {
 interface FileFetchResultFull {
     type: 'full',
     buffer: Buffer,
-    blocks: [],
 }
 
 interface FileFetchResultPartial {
@@ -216,8 +215,8 @@ export default class CASCClient {
             this.getFileByContentKey(lookupCKeys[0].cKey),
         ]);
 
-        const keysReader = new WDCReader(keysResult.buffer, keysResult.blocks);
-        const lookupReader = new WDCReader(lookupResult.buffer, lookupResult.blocks);
+        const keysReader = new WDCReader(keysResult.buffer);
+        const lookupReader = new WDCReader(lookupResult.buffer);
 
         [...lookupReader.rows.keys()].forEach((keyID) => {
             const lookupRow = lookupReader.rows.get(keyID);
@@ -259,15 +258,14 @@ export default class CASCClient {
         return rootFile.fileDataID2CKey.get(fileDataID);
     }
 
-    async getFileByContentKey(
-        contentKey: string,
-        allowMissingKey = false,
-    ): Promise<FileFetchResult> {
+    async getFileByContentKey(cKey: string, allowMissingKey?: false): Promise<FileFetchResultFull>;
+    async getFileByContentKey(cKey: string, allowMissingKey: true): Promise<FileFetchResult>;
+    async getFileByContentKey(cKey: string, allowMissingKey = false): Promise<FileFetchResult> {
         assert(this.preload, 'Client not initialized');
 
         const { prefixes, encoding, archives } = this.preload;
-        const eKeys = encoding.cKey2EKey.get(contentKey);
-        assert(eKeys, `Failing to find encoding key for ${contentKey}`);
+        const eKeys = encoding.cKey2EKey.get(cKey);
+        assert(eKeys, `Failing to find encoding key for ${cKey}`);
 
         const eKey = typeof eKeys === 'string' ? eKeys : eKeys[0];
 
@@ -277,16 +275,24 @@ export default class CASCClient {
             : await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig);
 
         const reader = new BLTEReader(blte, eKey, this.keys);
-        const blocks = reader.processBytes(allowMissingKey);
-
-        if (blocks.length === 0) {
-            const hash = crypto.createHash('md5').update(reader.buffer).digest('hex');
-            assert(hash === contentKey, `Invalid hash: expected ${contentKey}, got ${hash}`);
+        if (!allowMissingKey) {
+            reader.processBytes(allowMissingKey);
 
             return {
                 type: 'full',
                 buffer: reader.buffer,
-                blocks: [],
+            };
+        }
+
+        const blocks = reader.processBytes(allowMissingKey);
+
+        if (blocks.length === 0) {
+            const hash = crypto.createHash('md5').update(reader.buffer).digest('hex');
+            assert(hash === cKey, `Invalid hash: expected ${cKey}, got ${hash}`);
+
+            return {
+                type: 'full',
+                buffer: reader.buffer,
             };
         }
 

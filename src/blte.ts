@@ -92,29 +92,27 @@ export default class BLTEReader {
         this.processedOffset = headerSize;
     }
 
-    private processBlock(
-        blockBuffer: Buffer,
-        blockIndex: number,
-        allowMissingKey: boolean,
-    ): Buffer | string {
-        const flag = blockBuffer.readUInt8(0);
+    private processBlock(buffer: Buffer, index: number, allowMissingKey: false): Buffer;
+    private processBlock(buffer: Buffer, index: number, allowMissingKey: true): Buffer | string;
+    private processBlock(buffer: Buffer, index: number, allowMissingKey: boolean): Buffer | string {
+        const flag = buffer.readUInt8(0);
         switch (flag) {
             case 0x45: { // Encrypted
                 let offset = 1;
 
-                const keyNameLength = blockBuffer.readUInt8(offset);
+                const keyNameLength = buffer.readUInt8(offset);
                 offset += 1;
 
-                const keyNameBE = blockBuffer.toString('hex', offset, offset + keyNameLength);
+                const keyNameBE = buffer.toString('hex', offset, offset + keyNameLength);
                 offset += keyNameLength;
 
-                const ivLength = blockBuffer.readUInt8(offset);
+                const ivLength = buffer.readUInt8(offset);
                 offset += 1;
 
-                const ivBuffer = blockBuffer.subarray(offset, offset + ivLength);
+                const ivBuffer = buffer.subarray(offset, offset + ivLength);
                 offset += ivLength;
 
-                const encryptType = blockBuffer.readUInt8(offset);
+                const encryptType = buffer.readUInt8(offset);
                 offset += 1;
 
                 assert(encryptType === ENC_TYPE_SALSA20, `[BLTE]: Invalid encrypt type: ${encryptType}`);
@@ -132,26 +130,31 @@ export default class BLTEReader {
                 for (let i = 0; i < 8; i += 1) {
                     const byte = ivBuffer.byteLength > i ? ivBuffer.readUInt8(i) : undefined;
                     // eslint-disable-next-line no-bitwise
-                    iv[i] = byte ? (byte ^ ((blockIndex >> (8 * i)) & 0xff)) : 0x00;
+                    iv[i] = byte ? (byte ^ ((index >> (8 * i)) & 0xff)) : 0x00;
                 }
 
                 const handler = new Salsa20(key, iv);
-                const buffer = handler.process(blockBuffer.subarray(offset));
+                const decrypted = handler.process(buffer.subarray(offset));
 
-                return this.processBlock(Buffer.from(buffer.buffer), blockIndex, allowMissingKey);
+                if (allowMissingKey) {
+                    return this.processBlock(Buffer.from(decrypted.buffer), index, true);
+                }
+                return this.processBlock(Buffer.from(decrypted.buffer), index, false);
             }
             case 0x46: // Frame (Recursive)
                 throw new Error('[BLTE]: Frame (Recursive) block not supported');
             case 0x4e: // Frame (Normal)
-                return blockBuffer.subarray(1);
+                return buffer.subarray(1);
             case 0x5a: // Compressed
-                return zlib.inflateSync(blockBuffer.subarray(1));
+                return zlib.inflateSync(buffer.subarray(1));
             default:
                 throw new Error(`[BLTE]: Invalid block flag: ${flag}`);
         }
     }
 
-    processBytes(allowMissingKey = false, size = Infinity): MissingKeyBlock[] {
+    processBytes(allowMissingKey?: false, size?: number): undefined;
+    processBytes(allowMissingKey: true, size?: number): MissingKeyBlock[];
+    processBytes(allowMissingKey = false, size = Infinity): MissingKeyBlock[] | undefined {
         const missingKeyBlocks: MissingKeyBlock[] = [];
 
         while (
@@ -170,26 +173,37 @@ export default class BLTEReader {
                 assert(blockHash === block.hash, `[BLTE]: Invalid block hash: expected ${block.hash}, got ${blockHash}`);
             }
 
-            const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
-            if (buffer instanceof Buffer) {
+            if (allowMissingKey) {
+                const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
+                if (buffer instanceof Buffer) {
+                    assert(buffer.byteLength === block.decompressedSize, `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize}, got ${buffer.byteLength}`);
+
+                    this.buffer = Buffer.concat([this.buffer, buffer]);
+                } else {
+                    missingKeyBlocks.push({
+                        offset: this.buffer.byteLength,
+                        size: block.decompressedSize,
+                        blockIndex,
+                        keyName: buffer,
+                    });
+
+                    this.buffer = Buffer.concat([
+                        this.buffer,
+                        Buffer.alloc(block.decompressedSize),
+                    ]);
+                }
+            } else {
+                const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
+
                 assert(buffer.byteLength === block.decompressedSize, `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize}, got ${buffer.byteLength}`);
 
                 this.buffer = Buffer.concat([this.buffer, buffer]);
-            } else {
-                missingKeyBlocks.push({
-                    offset: this.buffer.byteLength,
-                    size: block.decompressedSize,
-                    blockIndex,
-                    keyName: buffer,
-                });
-
-                this.buffer = Buffer.concat([this.buffer, Buffer.alloc(block.decompressedSize)]);
             }
 
             this.processedBlock += 1;
             this.processedOffset += block.compressedSize;
         }
 
-        return missingKeyBlocks;
+        return allowMissingKey ? missingKeyBlocks : undefined;
     }
 }
