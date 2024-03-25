@@ -24,7 +24,7 @@ const { buffer } = await client.getFileByContentKey(cKey.cKey);
 
 // Parse DB2 file
 const reader = new WDCReader(buffer);
-const parser = new DBDParser(reader);
+const parser = await DBDParser.parse(reader);
 
 // Access DB2 file
 // reader.getRowData
