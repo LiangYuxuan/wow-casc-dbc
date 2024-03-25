@@ -76,11 +76,11 @@ export default class DBDParser {
 
     public columns: Column[] = [];
 
-    constructor(wdc: WDCReader) {
+    private constructor(wdc: WDCReader) {
         this.wdc = wdc;
     }
 
-    async init(): Promise<void> {
+    private async init(): Promise<void> {
         const manifestsURL = 'https://raw.githubusercontent.com/wowdev/WoWDBDefs/master/manifest.json';
         const manifests = await (await fetch(manifestsURL)).json() as Manifest[];
 
@@ -156,6 +156,14 @@ export default class DBDParser {
                 });
             }
         });
+    }
+
+    static async parse(wdc: WDCReader): Promise<DBDParser> {
+        const parser = new DBDParser(wdc);
+
+        await parser.init();
+
+        return parser;
     }
 
     getAllIDs(): number[] {
