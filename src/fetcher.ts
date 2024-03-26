@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
 
+import cliProgress from 'cli-progress';
+
 import Store from './store.ts';
 
 const USER_AGENT = 'node-wow-casc-dbc';
@@ -23,8 +25,15 @@ const formatCDNKey = (key: string): string => `${key.substring(0, 2)}/${key.subs
 
 const requestData = async (
     url: string,
-    partialOffset = undefined as number | undefined,
-    partialLength = undefined as number | undefined,
+    {
+        partialOffset,
+        partialLength,
+        showProgress,
+    }: {
+        partialOffset?: number,
+        partialLength?: number,
+        showProgress?: boolean,
+    } = {},
 ): Promise<Buffer> => new Promise((resolve, reject) => {
     const options = {
         headers: {
@@ -38,11 +47,11 @@ const requestData = async (
     http.get(url, options, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
             if (res.headers.location) {
-                requestData(res.headers.location, partialOffset, partialLength)
+                requestData(res.headers.location, { partialOffset, partialLength, showProgress })
                     .then(resolve)
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
-                    .catch(reject);
+                    .catch((err: unknown) => {
+                        throw err;
+                    });
             } else {
                 reject(new Error(`Failed to request ${url}, Status Code: ${res.statusCode.toString()}`));
             }
@@ -54,9 +63,26 @@ const requestData = async (
             return;
         }
 
+        const lengthText = res.headers['content-length'];
+        const length = lengthText ? parseInt(lengthText, 10) : 0;
+        const bar = showProgress && !Number.isNaN(length) && length >= 10485760
+            ? new cliProgress.SingleBar({ etaBuffer: 10240 }, cliProgress.Presets.shades_classic)
+            : undefined;
+        bar?.start(length, 0);
+
         const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
-        res.on('end', () => { resolve(Buffer.concat(chunks)); });
+        res.on('data', (chunk: Buffer) => {
+            bar?.increment(chunk.length);
+            chunks.push(chunk);
+        });
+        res.on('end', () => {
+            bar?.stop();
+            resolve(Buffer.concat(chunks));
+        });
+        res.on('error', (err) => {
+            bar?.stop();
+            reject(err);
+        });
     })
         .on('error', reject)
         .end();
@@ -66,15 +92,30 @@ const downloadFile = (
     prefixes: string[],
     type: 'data' | 'config',
     key: string,
-    partialOffset = undefined as number | undefined,
-    partialLength = undefined as number | undefined,
+    {
+        partialOffset,
+        partialLength,
+        showProgress,
+        showAttemptFail,
+    }: {
+        partialOffset?: number,
+        partialLength?: number,
+        showProgress?: boolean,
+        showAttemptFail?: boolean,
+    } = {},
 ): Promise<Buffer> => {
     const urls = prefixes.map((prefix) => `${prefix}/${type}/${formatCDNKey(key)}`);
 
     return urls
         .reduce(
-            (prev, url) => prev
-                .catch(() => requestData(url, partialOffset, partialLength)),
+            (prev, url, index) => prev
+                .catch((err: unknown) => {
+                    if (showAttemptFail && index > 0 && err instanceof Error) {
+                        // eslint-disable-next-line no-console
+                        console.warn(`${new Date().toISOString()} [WARN]:`, err.message);
+                    }
+                    return requestData(url, { partialOffset, partialLength, showProgress });
+                }),
             Promise.reject<Buffer>(new Error('')),
         );
 };
@@ -100,9 +141,19 @@ export const getDataFile = async (
     key: string,
     type: keyof typeof CACHE_DIRS,
     buildCKey: string,
-    name?: string,
-    partialOffset = undefined as number | undefined,
-    partialLength = undefined as number | undefined,
+    {
+        name,
+        partialOffset,
+        partialLength,
+        showProgress,
+        showAttemptFail,
+    }: {
+        name?: string,
+        partialOffset?: number,
+        partialLength?: number,
+        showProgress?: boolean,
+        showAttemptFail?: boolean,
+    } = {},
 ): Promise<Buffer> => {
     const dir = type === 'build'
         ? path.join(CACHE_DIRS[type], buildCKey)
@@ -117,7 +168,9 @@ export const getDataFile = async (
         return cacheBuffer;
     }
 
-    const downloadBuffer = await downloadFile(prefixes, 'data', key, partialOffset, partialLength);
+    const downloadBuffer = await downloadFile(prefixes, 'data', key, {
+        partialOffset, partialLength, showProgress, showAttemptFail,
+    });
     if ((partialOffset === undefined && partialLength === undefined) || name) {
         await fs.mkdir(path.resolve(CACHE_ROOT, dir), { recursive: true });
         await fs.writeFile(path.resolve(CACHE_ROOT, file), downloadBuffer);
@@ -132,8 +185,13 @@ export const getDataFile = async (
 export const getConfigFile = async (
     prefixes: string[],
     key: string,
+    {
+        showProgress, showAttemptFail,
+    }: {
+        showProgress?: boolean, showAttemptFail?: boolean,
+    } = {},
 ): Promise<string> => {
-    const downloadBuffer = await downloadFile(prefixes, 'config', key);
+    const downloadBuffer = await downloadFile(prefixes, 'config', key, { showProgress, showAttemptFail });
     return downloadBuffer.toString('utf-8');
 };
 

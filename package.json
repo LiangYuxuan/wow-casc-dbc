@@ -37,6 +37,8 @@
   "author": "Rhythm",
   "license": "MIT",
   "devDependencies": {
+    "@types/async": "^3.2.24",
+    "@types/cli-progress": "^3.11.5",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^7.4.0",
@@ -49,5 +51,9 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.4.3",
     "unbuild": "^2.0.0"
+  },
+  "dependencies": {
+    "async": "^3.2.5",
+    "cli-progress": "^3.12.0"
   }
 }

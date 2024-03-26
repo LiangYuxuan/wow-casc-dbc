@@ -1,6 +1,9 @@
 import assert from 'node:assert';
 import crypto from 'node:crypto';
 
+import { mapLimit, retry } from 'async';
+import cliProgress from 'cli-progress';
+
 import {
     getProductVersions,
     getProductCDNs,
@@ -15,7 +18,7 @@ import parseRootFile, { LocaleFlags, ContentFlags } from './parsers/rootFile.ts'
 import getNameHash from './jenkins96.ts';
 import BLTEReader from './blte.ts';
 import WDCReader from './wdc.ts';
-import { resolveCDNHost, asyncQueue, formatFileSize } from './utils.ts';
+import { resolveCDNHost, formatFileSize } from './utils.ts';
 
 import type { Version } from './parsers/productConfig.ts';
 import type { FileInfo } from './parsers/rootFile.ts';
@@ -118,9 +121,13 @@ export default class CASCClient {
         });
 
         this.log(LogLevel.info, 'Fetching build configurations...');
-        const cdnConfigText = await getConfigFile(prefixes, this.version.CDNConfig);
+        const cdnConfigText = await getConfigFile(prefixes, this.version.CDNConfig, {
+            showAttemptFail: this.logLevel >= LogLevel.warn,
+        });
         const cdnConfig = parseCDNConfig(cdnConfigText);
-        const buildConfigText = await getConfigFile(prefixes, this.version.BuildConfig);
+        const buildConfigText = await getConfigFile(prefixes, this.version.BuildConfig, {
+            showAttemptFail: this.logLevel >= LogLevel.warn,
+        });
         const buildConfig = parseBuildConfig(buildConfigText);
 
         this.log(LogLevel.info, 'Loading archives...');
@@ -129,20 +136,38 @@ export default class CASCClient {
         const archiveTotalSize = cdnConfig.archivesIndexSize
             .split(' ')
             .reduce((a, b) => a + parseInt(b, 10), 0);
-        const archives = new Map(
-            (
-                await asyncQueue(
-                    archiveKeys,
-                    async (key) => {
-                        const fileName = `${key}.index`;
-                        const buffer = await getDataFile(prefixes, fileName, 'indexes', this.version.BuildConfig);
+        const archiveBar = this.logLevel >= LogLevel.info
+            ? new cliProgress.SingleBar({ etaBuffer: 100 }, cliProgress.Presets.shades_classic)
+            : undefined;
+        archiveBar?.start(archiveCount, 0);
+        const archivesMapArray = await mapLimit(
+            archiveKeys,
+            50,
+            async (key: string) => {
+                const fileName = `${key}.index`;
+                const buffer = await retry({
+                    times: 5,
+                    interval: 3000,
+                }, async () => getDataFile(prefixes, fileName, 'indexes', this.version.BuildConfig, {
+                    showProgress: this.logLevel >= LogLevel.info,
+                    showAttemptFail: this.logLevel >= LogLevel.warn,
+                }));
+                const map = parseArchiveIndex(buffer, key);
 
-                        return parseArchiveIndex(buffer, key);
-                    },
-                    50,
-                )
-            ).flatMap((e) => [...e]),
-        );
+                archiveBar?.increment();
+
+                return map;
+            },
+        )
+            .then((result) => {
+                archiveBar?.stop();
+                return result.flatMap((e) => [...e]);
+            })
+            .catch((error: unknown) => {
+                archiveBar?.stop();
+                throw error;
+            });
+        const archives = new Map(archivesMapArray);
         this.log(
             LogLevel.info,
             `Loaded ${archiveCount.toString()} archives (${archives.size.toString()} entries, ${formatFileSize(archiveTotalSize)})`,
@@ -150,7 +175,11 @@ export default class CASCClient {
 
         this.log(LogLevel.info, 'Loading encoding table...');
         const [encodingCKey, encodingEKey] = buildConfig.encoding.split(' ');
-        const encodingBuffer = await getDataFile(prefixes, encodingEKey, 'build', this.version.BuildConfig, 'encoding');
+        const encodingBuffer = await getDataFile(prefixes, encodingEKey, 'build', this.version.BuildConfig, {
+            name: 'encoding',
+            showProgress: this.logLevel >= LogLevel.info,
+            showAttemptFail: this.logLevel >= LogLevel.warn,
+        });
         this.log(LogLevel.info, `Loaded encoding table (${formatFileSize(encodingBuffer.byteLength)})`);
 
         this.log(LogLevel.info, 'Parsing encoding table...');
@@ -162,7 +191,11 @@ export default class CASCClient {
         const rootEKeys = encoding.cKey2EKey.get(rootCKey);
         assert(rootEKeys, 'Failing to find EKey for root table.');
         const rootEKey = typeof rootEKeys === 'string' ? rootEKeys : rootEKeys[0];
-        const rootBuffer = await getDataFile(prefixes, rootEKey, 'build', this.version.BuildConfig, 'root');
+        const rootBuffer = await getDataFile(prefixes, rootEKey, 'build', this.version.BuildConfig, {
+            name: 'root',
+            showProgress: this.logLevel >= LogLevel.info,
+            showAttemptFail: this.logLevel >= LogLevel.warn,
+        });
         this.log(LogLevel.info, `Loaded root table (${formatFileSize(rootBuffer.byteLength)})`);
 
         this.log(LogLevel.info, 'Parsing root file...');
@@ -273,8 +306,17 @@ export default class CASCClient {
 
         const archive = archives.get(eKey);
         const blte = archive
-            ? await getDataFile(prefixes, archive.key, 'data', this.version.BuildConfig, eKey, archive.offset, archive.size)
-            : await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig);
+            ? await getDataFile(prefixes, archive.key, 'data', this.version.BuildConfig, {
+                name: eKey,
+                partialOffset: archive.offset,
+                partialLength: archive.size,
+                showProgress: this.logLevel >= LogLevel.info,
+                showAttemptFail: this.logLevel >= LogLevel.warn,
+            })
+            : await getDataFile(prefixes, eKey, 'data', this.version.BuildConfig, {
+                showProgress: this.logLevel >= LogLevel.info,
+                showAttemptFail: this.logLevel >= LogLevel.warn,
+            });
 
         const reader = new BLTEReader(blte, eKey, this.keys);
         if (!allowMissingKey) {
