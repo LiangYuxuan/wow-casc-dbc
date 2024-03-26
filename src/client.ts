@@ -211,7 +211,7 @@ export default class CASCClient {
     }
 
     async loadRemoteListFile(): Promise<void> {
-        const url = 'https://github.com/wowdev/wow-listfile/releases/download/202402031841/community-listfile.csv';
+        const url = 'https://github.com/wowdev/wow-listfile/releases/latest/download/community-listfile.csv';
         const text = await (await fetch(url)).text();
         const lines = text.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
 
@@ -282,7 +282,7 @@ export default class CASCClient {
         const { nameHash2FileDataID } = rootFile;
 
         const nameHash = getNameHash(name);
-        return nameHash2FileDataID.get(nameHash) ?? this.name2FileDataID.get(name);
+        return nameHash2FileDataID.get(nameHash) ?? this.name2FileDataID.get(name.toLowerCase());
     }
 
     getContentKeysByFileDataID(fileDataID: number): FileInfo[] | undefined {
