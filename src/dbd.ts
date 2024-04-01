@@ -76,6 +76,8 @@ export default class DBDParser {
 
     public columns: Column[] = [];
 
+    private cache = new Map<number, Record<string, ColumnData | ColumnData[]>>();
+
     private constructor(wdc: WDCReader) {
         this.wdc = wdc;
     }
@@ -171,6 +173,10 @@ export default class DBDParser {
     }
 
     getRowData(id: number): Record<string, ColumnData | ColumnData[]> | undefined {
+        if (this.cache.has(id)) {
+            return structuredClone(this.cache.get(id));
+        }
+
         const row = this.wdc.getRowData(id);
         if (!row) {
             return undefined;
@@ -334,6 +340,8 @@ export default class DBDParser {
             });
         }
 
-        return data;
+        this.cache.set(id, data);
+
+        return structuredClone(data);
     }
 }
