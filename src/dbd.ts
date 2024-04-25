@@ -231,9 +231,22 @@ export default class DBDParser {
                             data[column.name] = cell.string;
                         }
                     } else if (column.type === 'float') {
-                        assert(typeof cell.data === 'number', `Invalid data type for float column ${column.name}`);
+                        if (column.arraySize) {
+                            assert(typeof cell.data === 'bigint', `Invalid data type for float array column ${column.name}`);
 
-                        data[column.name] = castFloat(cell.data, srcSize, srcSigned);
+                            const values: number[] = [];
+                            const castBuffer = Buffer.from(cell.data.toString(16).padStart(8 * column.arraySize, '0'), 'hex');
+                            for (let i = 0; i < column.arraySize; i += 1) {
+                                const value = castBuffer.readFloatLE(i * 4);
+                                values.push(Math.round(value * 100) / 100);
+                            }
+
+                            data[column.name] = values;
+                        } else {
+                            assert(typeof cell.data === 'number', `Invalid data type for float column ${column.name}`);
+
+                            data[column.name] = castFloat(cell.data, srcSize, srcSigned);
+                        }
                     } else if (typeof cell.data === 'number') {
                         data[column.name] = castIntegerBySize(
                             cell.data,
