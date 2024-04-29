@@ -253,7 +253,7 @@ export default class CASCClient {
         const keysReader = new WDCReader(keysResult.buffer);
         const lookupReader = new WDCReader(lookupResult.buffer);
 
-        [...lookupReader.rows.keys()].forEach((keyID) => {
+        lookupReader.getAllIDs().forEach((keyID) => {
             const lookupRow = lookupReader.rows.get(keyID);
             const keyRow = keysReader.rows.get(keyID);
 
