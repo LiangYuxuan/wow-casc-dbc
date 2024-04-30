@@ -4,4 +4,4 @@ node_modules
 
 dist
 cache
-files
+src/local-test
