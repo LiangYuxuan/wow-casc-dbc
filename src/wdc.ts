@@ -3,6 +3,7 @@
 import assert from 'node:assert';
 
 import type { MissingKeyBlock } from './blte.ts';
+import type ADBReader from './adb.ts';
 
 const WDC5_MAGIC = 0x57444335;
 
@@ -131,6 +132,17 @@ interface Section {
     relationshipMap: Map<number, number>,
 }
 
+interface HotfixModify {
+    type: 'modify',
+    data: Buffer,
+}
+
+interface HotfixDelete {
+    type: 'delete',
+}
+
+type Hotfix = HotfixModify | HotfixDelete;
+
 const readBitpackedValue = (
     buffer: Buffer,
     fieldOffsetBits: number,
@@ -190,7 +202,9 @@ export default class WDCReader {
 
     public readonly copyTable = new Map<number, number>();
 
-    constructor(buffer: Buffer, blocks: MissingKeyBlock[] = []) {
+    public readonly hotfixes = new Map<number, Hotfix>();
+
+    constructor(buffer: Buffer, blocks: MissingKeyBlock[] = [], adb?: ADBReader) {
         const magic = buffer.readUInt32BE(0);
         // const version = buffer.readUInt32LE(4);
         // const schema = buffer.toString('ascii', 8, 136);
@@ -694,6 +708,28 @@ export default class WDCReader {
                 }
             }
         });
+
+        const entries = adb?.tableEntries.get(tableHash);
+        entries
+            ?.filter((entry) => entry.pushID !== -1)
+            .sort((a, b) => a.pushID - b.pushID)
+            .forEach((entry) => {
+                switch (entry.recordState) {
+                    case 1: // Valid
+                        this.hotfixes.set(entry.recordID, { type: 'modify', data: entry.data });
+                        break;
+                    case 2: // Delete
+                        this.hotfixes.set(entry.recordID, { type: 'delete' });
+                        break;
+                    case 3: // Invalid
+                        this.hotfixes.delete(entry.recordID);
+                        break;
+                    case 4: // NotPublic
+                        break;
+                    default:
+                        throw new Error(`Unknown record state: ${entry.recordState.toString()}`);
+                }
+            });
     }
 
     getAllIDs(): number[] {
@@ -701,6 +737,22 @@ export default class WDCReader {
     }
 
     getRowData(id: number): ParsedField[] | SparseRow | undefined {
+        const hotfix = this.hotfixes.get(id);
+        if (hotfix) {
+            switch (hotfix.type) {
+                case 'modify':
+                    return {
+                        type: 'sparse',
+                        data: hotfix.data,
+                    };
+                case 'delete':
+                    return undefined;
+                default:
+                    hotfix satisfies never;
+                    throw new Error('Unreachable');
+            }
+        }
+
         const dst = this.copyTable.get(id);
         if (dst) {
             return this.rows.get(dst);
