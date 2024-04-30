@@ -284,6 +284,10 @@ export default class DBDParser {
                     data[column.name] = id;
 
                     if (column.isInline) {
+                        const currField = this.wdc.fields[fieldIndex];
+                        const size = Math.ceil((column.size ?? (32 - currField.size)) / 8);
+                        offset += size;
+
                         fieldIndex += 1;
                     }
                 } else if (column.isInline) {
