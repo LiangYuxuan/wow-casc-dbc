@@ -23,6 +23,7 @@ import { resolveCDNHost, formatFileSize } from './utils.ts';
 import type { Version } from './parsers/productConfig.ts';
 import type { FileInfo } from './parsers/rootFile.ts';
 import type { MissingKeyBlock } from './blte.ts';
+import type ADBReader from './adb.ts';
 
 interface ClientPreloadData {
     prefixes: string[],
@@ -273,6 +274,40 @@ export default class CASCClient {
                 this.keys.set(keyName.toLowerCase(), key);
             }
         });
+    }
+
+    loadBroadcastTACTKeys(adb: ADBReader): void {
+        adb.tableEntries
+            .get(0x021826BB) // BroadcastText
+            ?.forEach(({ data }) => {
+                if (data.byteLength > 0) {
+                    let pointer = 0;
+
+                    // Text_lang
+                    while (data[pointer] !== 0) {
+                        pointer += 1;
+                    }
+                    pointer += 1;
+
+                    // Text1_lang
+                    while (data[pointer] !== 0) {
+                        pointer += 1;
+                    }
+                    pointer += 1 + 43;
+
+                    if (pointer < data.byteLength) {
+                        const extraTableHash = data.readUInt32LE(pointer);
+                        if (extraTableHash === 0xDF2F53CF) { // TactKey
+                            const keyName = data.readBigUInt64LE(pointer + 4).toString(16).padStart(16, '0');
+                            const key = Uint8Array.from(data.subarray(pointer + 12));
+
+                            if (!this.keys.has(keyName)) {
+                                this.keys.set(keyName, key);
+                            }
+                        }
+                    }
+                }
+            });
     }
 
     getFileDataIDByName(name: string): number | undefined {
