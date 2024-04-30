@@ -316,7 +316,8 @@ export default class DBDParser {
 
                         let count;
                         if (fieldIndex + 1 < this.wdc.fields.length) {
-                            count = (nextField.position - currField.position) / size;
+                            // reading hotfix for normal db2 may have fields with same position
+                            count = Math.max((nextField.position - currField.position) / size, 1);
                         } else {
                             // nextPos = byteLength - offset + currPos
                             count = column.arraySize ? ((buffer.byteLength - offset) / size) : 1;
