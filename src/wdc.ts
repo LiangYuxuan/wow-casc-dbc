@@ -164,16 +164,11 @@ const readBitpackedValue = (
     }
 
     // need to be bigint
-    let remain = sizeBytes;
     let value = 0n;
 
-    while (remain > 0) {
-        const byteLength = Math.min(remain, 6);
-        const offset = offsetBytes + remain - byteLength;
-        const rawValue = buffer.readUIntLE(offset, byteLength);
-
-        value = (value << BigInt(byteLength * 8)) | BigInt(rawValue);
-        remain -= byteLength;
+    for (let i = sizeBytes - 1; i >= 0; i -= 1) {
+        const byte = buffer.readUInt8(offsetBytes + i);
+        value = (value << 8n) | BigInt(byte);
     }
 
     return signed
