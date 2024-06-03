@@ -69,6 +69,19 @@ const castBigInt64 = (value: bigint, srcSigned: boolean, dstSigned: boolean): bi
     return dstSigned ? castBuffer.readBigInt64LE(0) : castBuffer.readBigUInt64LE(0);
 };
 
+const getCastBuffer = (value: bigint, srcSize: number, dstSize: number): Buffer => {
+    const castBuffer = Buffer.alloc(dstSize);
+    let remain = value;
+
+    // eslint-disable-next-line no-bitwise
+    for (let i = 0; i < srcSize && remain > 0n; i += 1, remain >>= 8n) {
+        const byte = Number(BigInt.asUintN(8, remain));
+        castBuffer.writeUInt8(byte, i);
+    }
+
+    return castBuffer;
+};
+
 export default class DBDParser {
     public readonly wdc: WDCReader;
 
@@ -232,10 +245,13 @@ export default class DBDParser {
                         }
                     } else if (column.type === 'float') {
                         if (column.arraySize) {
-                            assert(typeof cell.data === 'bigint', `Invalid data type for float array column ${column.name}`);
+                            const castBuffer = getCastBuffer(
+                                typeof cell.data === 'number' ? BigInt(cell.data) : cell.data,
+                                srcSize,
+                                4 * column.arraySize,
+                            );
 
                             const values: number[] = [];
-                            const castBuffer = Buffer.from(cell.data.toString(16).padStart(8 * column.arraySize, '0'), 'hex');
                             for (let i = 0; i < column.arraySize; i += 1) {
                                 const value = castBuffer.readFloatLE(i * 4);
                                 values.push(Math.round(value * 100) / 100);
@@ -247,26 +263,53 @@ export default class DBDParser {
 
                             data[column.name] = castFloat(cell.data, srcSize, srcSigned);
                         }
-                    } else if (typeof cell.data === 'number') {
-                        data[column.name] = castIntegerBySize(
-                            cell.data,
-                            srcSize,
-                            srcSigned,
-                            dstSize ?? srcSize,
-                            column.isSigned,
-                        );
-                    } else {
-                        assert(!column.size || column.size === 64, `Unexpected size ${column.size?.toString() ?? ''} for column ${column.name}`);
+                    } else if (column.type === 'int') {
+                        if (column.arraySize) {
+                            assert(dstSize, `Missing size for int array column ${column.name}`);
 
-                        if (srcSigned !== column.isSigned) {
-                            data[column.name] = castBigInt64(
+                            const castBuffer = getCastBuffer(
+                                typeof cell.data === 'number' ? BigInt(cell.data) : cell.data,
+                                srcSize,
+                                4 * column.arraySize,
+                            );
+
+                            const values: number[] = [];
+                            if (column.isSigned) {
+                                for (let i = 0; i < column.arraySize; i += 1) {
+                                    const value = castBuffer.readIntLE(i * dstSize, dstSize);
+                                    values.push(value);
+                                }
+                            } else {
+                                for (let i = 0; i < column.arraySize; i += 1) {
+                                    const value = castBuffer.readUIntLE(i * dstSize, dstSize);
+                                    values.push(value);
+                                }
+                            }
+
+                            data[column.name] = values;
+                        } else if (typeof cell.data === 'number') {
+                            data[column.name] = castIntegerBySize(
                                 cell.data,
+                                srcSize,
                                 srcSigned,
+                                dstSize ?? srcSize,
                                 column.isSigned,
                             );
                         } else {
-                            data[column.name] = cell.data;
+                            assert(!column.size || column.size === 64, `Unexpected size ${column.size?.toString() ?? ''} for column ${column.name}`);
+
+                            if (srcSigned !== column.isSigned) {
+                                data[column.name] = castBigInt64(
+                                    cell.data,
+                                    srcSigned,
+                                    column.isSigned,
+                                );
+                            } else {
+                                data[column.name] = cell.data;
+                            }
                         }
+                    } else {
+                        throw new Error(`Unsupported column type ${column.type} for column ${column.name}`);
                     }
 
                     fieldIndex += 1;
