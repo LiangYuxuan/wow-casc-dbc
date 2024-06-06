@@ -128,9 +128,12 @@ export default class BLTEReader {
 
                 const iv = new Uint8Array(8);
                 for (let i = 0; i < 8; i += 1) {
-                    const byte = ivBuffer.byteLength > i ? ivBuffer.readUInt8(i) : undefined;
-                    // eslint-disable-next-line no-bitwise
-                    iv[i] = byte ? (byte ^ ((index >> (8 * i)) & 0xff)) : 0x00;
+                    if (i < ivLength) {
+                        // eslint-disable-next-line no-bitwise
+                        iv[i] = ivBuffer.readUInt8(i) ^ ((index >>> (8 * i)) & 0xff);
+                    } else {
+                        iv[i] = 0x00;
+                    }
                 }
 
                 const handler = new Salsa20(key, iv);
