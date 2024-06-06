@@ -35,6 +35,7 @@ interface ClientPreloadData {
 interface FileFetchResultFull {
     type: 'full',
     buffer: Buffer,
+    blocks: undefined,
 }
 
 interface FileFetchResultPartial {
@@ -363,6 +364,7 @@ export default class CASCClient {
             return {
                 type: 'full',
                 buffer: reader.buffer,
+                blocks: undefined,
             };
         }
 
@@ -375,6 +377,7 @@ export default class CASCClient {
             return {
                 type: 'full',
                 buffer: reader.buffer,
+                blocks: undefined,
             };
         }
 
