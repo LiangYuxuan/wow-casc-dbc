@@ -357,6 +357,9 @@ export default class CASCClient {
         if (!allowMissingKey) {
             reader.processBytes(allowMissingKey);
 
+            const hash = crypto.createHash('md5').update(reader.buffer).digest('hex');
+            assert(hash === cKey, `Invalid hash: expected ${cKey}, got ${hash}`);
+
             return {
                 type: 'full',
                 buffer: reader.buffer,
