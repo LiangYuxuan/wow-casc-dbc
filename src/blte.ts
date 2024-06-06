@@ -115,7 +115,7 @@ export default class BLTEReader {
                 const encryptType = buffer.readUInt8(offset);
                 offset += 1;
 
-                assert(encryptType === ENC_TYPE_SALSA20, `[BLTE]: Invalid encrypt type: ${encryptType.toString(16).padStart(2, '0')}`);
+                assert(encryptType === ENC_TYPE_SALSA20, `[BLTE]: Invalid encrypt type: ${encryptType.toString(16).padStart(2, '0')} at block ${index.toString()}`);
 
                 const keyName = [...keyNameBE.matchAll(/.{2}/g)].map((v) => v[0]).reverse().join('').toLowerCase();
                 const key = this.keys.get(keyName);
@@ -123,7 +123,7 @@ export default class BLTEReader {
                     if (allowMissingKey) {
                         return keyName;
                     }
-                    throw new Error(`[BLTE]: Missing key: ${keyName}`);
+                    throw new Error(`[BLTE]: Missing key: ${keyName} at block ${index.toString()}`);
                 }
 
                 const iv = new Uint8Array(8);
@@ -145,13 +145,13 @@ export default class BLTEReader {
                 return this.processBlock(Buffer.from(decrypted.buffer), index, false);
             }
             case 0x46: // Frame (Recursive)
-                throw new Error('[BLTE]: Frame (Recursive) block not supported');
+                throw new Error(`[BLTE]: Frame (Recursive) block not supported at block ${index.toString()}`);
             case 0x4e: // Frame (Normal)
                 return buffer.subarray(1);
             case 0x5a: // Compressed
                 return zlib.inflateSync(buffer.subarray(1));
             default:
-                throw new Error(`[BLTE]: Invalid block flag: ${flag.toString(16).padStart(2, '0')}`);
+                throw new Error(`[BLTE]: Invalid block flag: ${flag.toString(16).padStart(2, '0')} at block ${index.toString()}`);
         }
     }
 
