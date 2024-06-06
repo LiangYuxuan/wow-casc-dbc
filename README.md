@@ -47,7 +47,7 @@ Some file is encrypted and no key released yet. For DB2 files, you can ignore th
 // ...
 
 const result = await client.getFileByContentKey(cKey.cKey, true);
-const reader = new WDCReader(result.buffer, result.type === 'partial' ? result.blocks : []);
+const reader = new WDCReader(result.buffer, result.blocks);
 const parser = await DBDParser.parse(reader);
 
 // ...
