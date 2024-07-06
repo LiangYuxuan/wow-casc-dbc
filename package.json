@@ -38,9 +38,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/async": "^3.2.24",
-    "@types/cli-progress": "^3.11.5",
+    "@types/cli-progress": "^3.11.6",
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.14.9",
+    "@types/node": "^20.14.10",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
     "eslint": "^8.57.0",
