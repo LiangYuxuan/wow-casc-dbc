@@ -53,7 +53,7 @@
     "unbuild": "^2.0.0"
   },
   "dependencies": {
-    "async": "^3.2.5",
+    "async": "^3.2.6",
     "cli-progress": "^3.12.0"
   }
 }
