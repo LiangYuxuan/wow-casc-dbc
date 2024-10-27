@@ -48,7 +48,7 @@
     "eslint-config-airbnb-typescript": "^18.0.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
-    "tsx": "^4.19.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "unbuild": "^2.0.0"
   },
