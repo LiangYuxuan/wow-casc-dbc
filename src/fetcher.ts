@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import http from 'node:http';
+import path from 'node:path';
 
 import cliProgress from 'cli-progress';
 
@@ -37,8 +37,10 @@ const requestData = async (
 ): Promise<Buffer> => new Promise((resolve, reject) => {
     const options = {
         headers: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             'User-Agent': USER_AGENT,
-            Range: partialOffset && partialLength
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            Range: partialOffset !== undefined && partialLength !== undefined
                 ? `bytes=${partialOffset.toString()}-${(partialOffset + partialLength - 1).toString()}`
                 : 'bytes=0-',
         },
@@ -46,7 +48,7 @@ const requestData = async (
 
     http.get(url, options, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
-            if (res.headers.location) {
+            if (res.headers.location !== undefined) {
                 requestData(res.headers.location, { partialOffset, partialLength, showProgress })
                     .then(resolve)
                     .catch((err: unknown) => {
@@ -58,14 +60,14 @@ const requestData = async (
             return;
         }
 
-        if (!res.statusCode || res.statusCode < 200 || res.statusCode > 302) {
+        if (res.statusCode === undefined || res.statusCode < 200 || res.statusCode > 302) {
             reject(new Error(`Failed to request ${url}, Status Code: ${res.statusCode?.toString() ?? 'undefined'}`));
             return;
         }
 
         const lengthText = res.headers['content-length'];
-        const length = lengthText ? parseInt(lengthText, 10) : 0;
-        const bar = showProgress && !Number.isNaN(length) && length >= 10485760
+        const length = lengthText !== undefined ? parseInt(lengthText, 10) : 0;
+        const bar = showProgress === true && !Number.isNaN(length) && length >= 10485760
             ? new cliProgress.SingleBar({ etaBuffer: 10240 }, cliProgress.Presets.shades_classic)
             : undefined;
         bar?.start(length, 0);
@@ -110,8 +112,7 @@ const downloadFile = (
         .reduce(
             (prev, url, index) => prev
                 .catch((err: unknown) => {
-                    if (showAttemptFail && index > 0 && err instanceof Error) {
-                        // eslint-disable-next-line no-console
+                    if (showAttemptFail === true && index > 0 && err instanceof Error) {
                         console.warn(`${new Date().toISOString()} [WARN]:`, err.message);
                     }
                     return requestData(url, { partialOffset, partialLength, showProgress });
@@ -122,7 +123,7 @@ const downloadFile = (
 
 const getFileCache = async (file: string): Promise<Buffer | undefined> => {
     const integrity = await cacheIntegrity.get(file);
-    if (integrity) {
+    if (integrity !== undefined) {
         try {
             const buffer = await fs.readFile(path.resolve(CACHE_ROOT, file));
             const hash = crypto.createHash('sha256').update(buffer).digest('hex');
@@ -158,7 +159,7 @@ export const getDataFile = async (
     const dir = type === 'build'
         ? path.join(CACHE_DIRS[type], buildCKey)
         : CACHE_DIRS[type];
-    const file = name ? path.join(dir, name) : path.join(dir, key);
+    const file = name !== undefined ? path.join(dir, name) : path.join(dir, key);
     const cacheBuffer = await getFileCache(file);
 
     if (cacheBuffer) {
@@ -171,7 +172,7 @@ export const getDataFile = async (
     const downloadBuffer = await downloadFile(prefixes, 'data', key, {
         partialOffset, partialLength, showProgress, showAttemptFail,
     });
-    if ((partialOffset === undefined && partialLength === undefined) || name) {
+    if ((partialOffset === undefined && partialLength === undefined) || name !== undefined) {
         await fs.mkdir(path.resolve(CACHE_ROOT, dir), { recursive: true });
         await fs.writeFile(path.resolve(CACHE_ROOT, file), downloadBuffer);
 
@@ -200,9 +201,8 @@ export const getProductVersions = async (
     product: string,
 ): Promise<string> => {
     const url = `http://${region}.patch.battle.net:1119/${product}/versions`;
-    const headers = {
-        'User-Agent': USER_AGENT,
-    };
+    const headers = new Headers();
+    headers.set('User-Agent', USER_AGENT);
 
     const res = await fetch(url, { headers });
 
@@ -214,9 +214,8 @@ export const getProductCDNs = async (
     product: string,
 ): Promise<string> => {
     const url = `http://${region}.patch.battle.net:1119/${product}/cdns`;
-    const headers = {
-        'User-Agent': USER_AGENT,
-    };
+    const headers = new Headers();
+    headers.set('User-Agent', USER_AGENT);
 
     const res = await fetch(url, { headers });
 

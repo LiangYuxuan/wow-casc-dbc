@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 const parseProductConfig = (text: string): Record<string, string>[] => {
     const lines = text.split(/\r?\n/);
 
@@ -24,7 +26,7 @@ const parseProductConfig = (text: string): Record<string, string>[] => {
     return entries;
 };
 
-export interface Version {
+interface Version {
     Region: string,
     BuildConfig: string,
     CDNConfig: string,
@@ -34,11 +36,11 @@ export interface Version {
     ProductConfig: string,
 }
 
-export const parseProductVersions = (
+const parseProductVersions = (
     text: string,
 ): Version[] => parseProductConfig(text) as unknown as Version[];
 
-export interface CDN {
+interface CDN {
     Name: string,
     Path: string,
     Hosts: string,
@@ -46,6 +48,10 @@ export interface CDN {
     ConfigPath: string,
 }
 
-export const parseProductCDNs = (
+const parseProductCDNs = (
     text: string,
 ): CDN[] => parseProductConfig(text) as unknown as CDN[];
+
+export { parseProductVersions, parseProductCDNs };
+
+export type { Version };

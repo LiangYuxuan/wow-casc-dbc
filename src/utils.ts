@@ -1,30 +1,14 @@
-export const resolveCDNHost = async (
-    hosts: string[],
-    path: string,
-): Promise<string[]> => {
-    const latencies = await Promise.allSettled(
-        hosts.map(async (host) => {
-            const start = Date.now();
-            await fetch(`http://${host}/`);
-            const end = Date.now();
-            return {
-                host,
-                latency: end - start,
-            };
-        }),
-    );
-
-    const resolved = latencies
-        .filter((result): result is PromiseFulfilledResult<{
-            host: string, latency: number,
-        }> => result.status === 'fulfilled')
-        .map((result) => result.value)
-        .sort((a, b) => a.latency - b.latency);
-
-    return resolved.map((result) => `http://${result.host}/${path}`);
-};
-
-const JEDEC = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+const JEDEC = [
+    'B',
+    'KB',
+    'MB',
+    'GB',
+    'TB',
+    'PB',
+    'EB',
+    'ZB',
+    'YB',
+];
 // Simplified version of https://github.com/avoidwork/filesize.js
 export const formatFileSize = (input: number) => {
     if (Number.isNaN(input)) return '';
@@ -64,4 +48,30 @@ export const formatFileSize = (input: number) => {
     if (isNegative) result[0] = -result[0];
 
     return result.join(' ');
+};
+
+export const resolveCDNHost = async (
+    hosts: string[],
+    path: string,
+): Promise<string[]> => {
+    const latencies = await Promise.allSettled(
+        hosts.map(async (host) => {
+            const start = Date.now();
+            await fetch(`http://${host}/`);
+            const end = Date.now();
+            return {
+                host,
+                latency: end - start,
+            };
+        }),
+    );
+
+    const resolved = latencies
+        .filter((result): result is PromiseFulfilledResult<{
+            host: string, latency: number,
+        }> => result.status === 'fulfilled')
+        .map((result) => result.value)
+        .sort((a, b) => a.latency - b.latency);
+
+    return resolved.map((result) => `http://${result.host}/${path}`);
 };

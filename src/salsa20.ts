@@ -28,7 +28,10 @@ export default class Salsa20 {
                 this.key[i] = keyView.getUint32(i * 4, true);
             }
             this.fixed = new Uint32Array([
-                0x61707865, 0x3320646e, 0x79622d32, 0x6b206574,
+                0x61707865,
+                0x3320646e,
+                0x79622d32,
+                0x6b206574,
             ]);
         } else {
             for (let i = 0; i < 4; i += 1) {
@@ -37,7 +40,10 @@ export default class Salsa20 {
                 this.key[i + 4] = word;
             }
             this.fixed = new Uint32Array([
-                0x61707865, 0x3120646e, 0x79622d36, 0x6b206574,
+                0x61707865,
+                0x3120646e,
+                0x79622d36,
+                0x6b206574,
             ]);
         }
 
@@ -50,6 +56,7 @@ export default class Salsa20 {
         this.generateBlock();
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     private QR(a: number, b: number, c: number, d: number) {
         let t: number;
 
@@ -68,10 +75,25 @@ export default class Salsa20 {
 
     private generateBlock() {
         const init = new Uint32Array([
-            this.fixed[0], this.key[0], this.key[1], this.key[2],
-            this.key[3], this.fixed[1], this.nonce[0], this.nonce[1],
-            this.counter[0], this.counter[1], this.fixed[2], this.key[4],
-            this.key[5], this.key[6], this.key[7], this.fixed[3],
+            this.fixed[0],
+            this.key[0],
+            this.key[1],
+            this.key[2],
+
+            this.key[3],
+            this.fixed[1],
+            this.nonce[0],
+            this.nonce[1],
+
+            this.counter[0],
+            this.counter[1],
+            this.fixed[2],
+            this.key[4],
+
+            this.key[5],
+            this.key[6],
+            this.key[7],
+            this.fixed[3],
         ]);
         this.state = new Uint32Array(init);
 

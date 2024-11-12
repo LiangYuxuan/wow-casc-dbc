@@ -155,3 +155,5 @@ const parseEncodingFile = (inputBuffer: Buffer, eKey: string, cKey: string): Enc
 };
 
 export default parseEncodingFile;
+
+export type { EncodingData };

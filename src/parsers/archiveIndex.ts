@@ -12,7 +12,19 @@ const KEY_SIZE_OFFSET = 6;
 const NUM_ELEMENTS_OFFSET = 8;
 const CHECKSUM_OFFSET = 12;
 
-const CHECKSUM_TRIES = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+const CHECKSUM_TRIES = [
+    10,
+    9,
+    8,
+    7,
+    6,
+    5,
+    4,
+    3,
+    2,
+    1,
+    0,
+];
 
 interface ArchiveIndex {
     key: string,
@@ -103,3 +115,5 @@ const parseArchiveIndex = (buffer: Buffer, cKey: string): Map<string, ArchiveInd
 };
 
 export default parseArchiveIndex;
+
+export type { ArchiveIndex };

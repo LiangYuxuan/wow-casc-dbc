@@ -20,7 +20,9 @@ interface Column {
     arraySize?: number,
 }
 
-type ColumnData = number | bigint | string | undefined;
+type BasicColumnData = number | bigint | string | undefined;
+
+type ColumnData = BasicColumnData | BasicColumnData[];
 
 const PATTERN_COLUMN = /^(int|float|locstring|string)(<[^:]+::[^>]+>)?\s([^\s]+)/;
 const PATTERN_LAYOUT = /^LAYOUT\s(.*)/;
@@ -89,7 +91,7 @@ export default class DBDParser {
 
     public columns: Column[] = [];
 
-    private cache = new Map<number, Record<string, ColumnData | ColumnData[]>>();
+    private cache = new Map<number, Record<string, ColumnData>>();
 
     private constructor(wdc: WDCReader) {
         this.wdc = wdc;
@@ -102,7 +104,7 @@ export default class DBDParser {
         const tableHashHex = this.wdc.tableHash.toString(16).padStart(8, '0').toLowerCase();
         const manifest = manifests.find((v) => v.tableHash.toLowerCase() === tableHashHex);
 
-        assert(manifest?.tableName, `No manifest found for table hash ${tableHashHex}`);
+        assert(manifest?.tableName !== undefined, `No manifest found for table hash ${tableHashHex}`);
 
         const url = `https://raw.githubusercontent.com/wowdev/WoWDBDefs/master/definitions/${manifest.tableName}.dbd`;
         const text = await (await fetch(url)).text();
@@ -122,7 +124,7 @@ export default class DBDParser {
 
         columnsChunk.shift();
         columnsChunk.forEach((line) => {
-            const match = line.match(PATTERN_COLUMN);
+            const match = PATTERN_COLUMN.exec(line);
             if (match) {
                 const [, type, , name] = match;
                 this.definitions.set(name.replace('?', ''), type);
@@ -131,7 +133,7 @@ export default class DBDParser {
 
         const layoutHashHex = this.wdc.layoutHash.toString(16).padStart(8, '0').toLowerCase();
         const versionChunk = chunks.find((chunk) => chunk.find((line) => {
-            const layoutsMatch = line.match(PATTERN_LAYOUT);
+            const layoutsMatch = PATTERN_LAYOUT.exec(line);
             const layouts = layoutsMatch?.[1].split(',').map((v) => v.trim().toLowerCase());
             return layouts?.includes(layoutHashHex);
         }));
@@ -143,20 +145,27 @@ export default class DBDParser {
                 return;
             }
 
-            const match = line.match(PATTERN_FIELD);
+            const match = PATTERN_FIELD.exec(line);
             if (match) {
-                const [, , annotationsText, name, , unsigned, sizeText, , arraySizeText] = match;
+                const [
+                    , ,
+                    annotationsText,
+                    name, ,
+                    unsigned,
+                    sizeText, ,
+                    arraySizeText,
+                ] = match;
                 const type = this.definitions.get(name);
 
-                assert(type, `No type found for column ${name}`);
+                assert(type !== undefined, `No type found for column ${name}`);
 
-                const annotations = annotationsText ? annotationsText.split(',').map((v) => v.trim()) : undefined;
+                const annotations = annotationsText ? annotationsText.split(',').map((v) => v.trim()) : [];
                 const size = sizeText ? parseInt(sizeText, 10) : undefined;
                 const arraySize = arraySizeText ? parseInt(arraySizeText, 10) : undefined;
 
-                const isID = !!annotations?.includes('id');
-                const isInline = !annotations?.includes('noninline');
-                const isRelation = !!annotations?.includes('relation');
+                const isID = !!annotations.includes('id');
+                const isInline = !annotations.includes('noninline');
+                const isRelation = !!annotations.includes('relation');
                 const isSigned = !unsigned;
 
                 this.columns.push({
@@ -185,7 +194,7 @@ export default class DBDParser {
         return this.wdc.getAllIDs();
     }
 
-    getRowData(id: number): Record<string, ColumnData | ColumnData[]> | undefined {
+    getRowData(id: number): Record<string, ColumnData> | undefined {
         if (this.cache.has(id)) {
             return structuredClone(this.cache.get(id));
         }
@@ -195,7 +204,7 @@ export default class DBDParser {
             return undefined;
         }
 
-        const data: Record<string, ColumnData | ColumnData[]> = {};
+        const data: Record<string, ColumnData> = {};
         if (Array.isArray(row)) {
             let fieldIndex = 0;
             this.columns.forEach((column) => {
@@ -206,9 +215,9 @@ export default class DBDParser {
                         fieldIndex += 1;
                     }
                 } else if (column.isInline) {
-                    const cell = row[fieldIndex];
-                    assert(cell, `No value found for column ${column.name}`);
+                    assert(row.length > fieldIndex, `No value found for column ${column.name}`);
 
+                    const cell = row[fieldIndex];
                     const fieldInfo = this.wdc.fieldsInfo[fieldIndex];
                     const srcSigned = fieldInfo.storageType === 'bitpackedSigned';
                     const srcSize = (
@@ -218,14 +227,16 @@ export default class DBDParser {
                     )
                         ? Math.ceil(fieldInfo.fieldSizeBits / 8)
                         : 4;
-                    const dstSize = column.size ? Math.ceil(column.size / 8) : undefined;
+                    const dstSize = column.size !== undefined
+                        ? Math.ceil(column.size / 8)
+                        : undefined;
 
                     if (cell.type === 'bitpackedArray') {
                         data[column.name] = cell.data.map((v) => {
                             if (column.type === 'float') {
                                 return castFloat(v, srcSize, srcSigned);
                             }
-                            if (dstSize) {
+                            if (dstSize !== undefined) {
                                 return castIntegerBySize(
                                     v,
                                     srcSize,
@@ -244,7 +255,7 @@ export default class DBDParser {
                             data[column.name] = cell.string;
                         }
                     } else if (column.type === 'float') {
-                        if (column.arraySize) {
+                        if (column.arraySize !== undefined) {
                             const castBuffer = getCastBuffer(
                                 typeof cell.data === 'number' ? BigInt(cell.data) : cell.data,
                                 srcSize,
@@ -264,8 +275,8 @@ export default class DBDParser {
                             data[column.name] = castFloat(cell.data, srcSize, srcSigned);
                         }
                     } else if (column.type === 'int') {
-                        if (column.arraySize) {
-                            assert(dstSize, `Missing size for int array column ${column.name}`);
+                        if (column.arraySize !== undefined) {
+                            assert(dstSize !== undefined, `Missing size for int array column ${column.name}`);
 
                             const castBuffer = getCastBuffer(
                                 typeof cell.data === 'number' ? BigInt(cell.data) : cell.data,
@@ -296,7 +307,7 @@ export default class DBDParser {
                                 column.isSigned,
                             );
                         } else {
-                            assert(!column.size || column.size === 64, `Unexpected size ${column.size?.toString() ?? ''} for column ${column.name}`);
+                            assert(column.size === undefined || column.size === 64, `Unexpected size ${column.size?.toString() ?? ''} for column ${column.name}`);
 
                             if (srcSigned !== column.isSigned) {
                                 data[column.name] = castBigInt64(
@@ -363,7 +374,9 @@ export default class DBDParser {
                             count = Math.max((nextField.position - currField.position) / size, 1);
                         } else {
                             // nextPos = byteLength - offset + currPos
-                            count = column.arraySize ? ((buffer.byteLength - offset) / size) : 1;
+                            count = column.arraySize !== undefined
+                                ? ((buffer.byteLength - offset) / size)
+                                : 1;
                         }
 
                         for (let i = 0; i < count; i += 1) {
@@ -406,3 +419,9 @@ export default class DBDParser {
         return structuredClone(data);
     }
 }
+
+export type {
+    Column,
+    ColumnData,
+    BasicColumnData,
+};

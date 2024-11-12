@@ -10,7 +10,7 @@ interface Block {
     hash: string,
 }
 
-export interface MissingKeyBlock {
+interface MissingKeyBlock {
     offset: number,
     size: number,
     blockIndex: number,
@@ -216,3 +216,5 @@ export default class BLTEReader {
         return allowMissingKey ? missingKeyBlocks : undefined;
     }
 }
+
+export type { MissingKeyBlock };

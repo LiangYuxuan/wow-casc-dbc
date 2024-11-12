@@ -1,4 +1,9 @@
 /* eslint-disable no-bitwise */
+/* eslint-disable import-x/no-unused-modules */
+/* eslint-disable @typescript-eslint/no-floating-promises */
+
+import { strictEqual } from 'node:assert';
+import { suite, test } from 'node:test';
 
 import Salsa20 from '../salsa20.ts';
 
@@ -14,7 +19,7 @@ const bytesToHex = (bytes: Uint8Array): string => [...bytes]
     .map((byte) => byte.toString(16).padStart(2, '0')).join('');
 
 // https://github.com/das-labor/legacy/blob/master/microcontroller-2/arm-crypto-lib/testvectors/salsa20-full-verified.test-vectors
-describe('Salsa20 128-bit', () => {
+suite('Salsa20 128-bit', () => {
     test('Set 1, Vector #0', () => {
         const key = '80000000000000000000000000000000';
         const iv = '0000000000000000';
@@ -43,17 +48,17 @@ describe('Salsa20 128-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 2, Vector #0', () => {
@@ -84,17 +89,17 @@ describe('Salsa20 128-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 3, Vector #0', () => {
@@ -125,17 +130,17 @@ describe('Salsa20 128-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 4, Vector #0', () => {
@@ -166,17 +171,17 @@ describe('Salsa20 128-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(131072)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(65472, 65536))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(65536, 65600))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(131008, 131072))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65472, 65536)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65536, 65600)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(131008, 131072)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 131072; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 5, Vector #0', () => {
@@ -207,17 +212,17 @@ describe('Salsa20 128-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 6, Vector #0', () => {
@@ -248,21 +253,21 @@ describe('Salsa20 128-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(131072)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(65472, 65536))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(65536, 65600))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(131008, 131072))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65472, 65536)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65536, 65600)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(131008, 131072)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 131072; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 });
 
-describe('Salsa20 256-bit', () => {
+suite('Salsa20 256-bit', () => {
     test('Set 1, Vector #0', () => {
         const key = '80000000000000000000000000000000'
                   + '00000000000000000000000000000000';
@@ -292,17 +297,17 @@ describe('Salsa20 256-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 2, Vector #0', () => {
@@ -334,17 +339,17 @@ describe('Salsa20 256-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 3, Vector #0', () => {
@@ -376,17 +381,17 @@ describe('Salsa20 256-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 4, Vector #0', () => {
@@ -418,17 +423,17 @@ describe('Salsa20 256-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(131072)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(65472, 65536))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(65536, 65600))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(131008, 131072))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65472, 65536)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65536, 65600)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(131008, 131072)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 131072; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 5, Vector #0', () => {
@@ -460,17 +465,17 @@ describe('Salsa20 256-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(512)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(192, 256))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(256, 320))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(448, 512))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(192, 256)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(256, 320)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(448, 512)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 512; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 
     test('Set 6, Vector #0', () => {
@@ -502,16 +507,16 @@ describe('Salsa20 256-bit', () => {
         const handler = new Salsa20(hexToBytes(key), hexToBytes(iv));
         const result = handler.process(hexToBytes('00'.repeat(131072)));
 
-        expect(bytesToHex(result.slice(0, 64))).toBe(bk1.toLowerCase());
-        expect(bytesToHex(result.slice(65472, 65536))).toBe(bk2.toLowerCase());
-        expect(bytesToHex(result.slice(65536, 65600))).toBe(bk3.toLowerCase());
-        expect(bytesToHex(result.slice(131008, 131072))).toBe(bk4.toLowerCase());
+        strictEqual(bytesToHex(result.slice(0, 64)), bk1.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65472, 65536)), bk2.toLowerCase());
+        strictEqual(bytesToHex(result.slice(65536, 65600)), bk3.toLowerCase());
+        strictEqual(bytesToHex(result.slice(131008, 131072)), bk4.toLowerCase());
 
         const xorResult = new Uint8Array(64);
         for (let i = 0; i < 131072; i += 1) {
             xorResult[i % 64] ^= result[i];
         }
 
-        expect(bytesToHex(xorResult)).toBe(xor.toLowerCase());
+        strictEqual(bytesToHex(xorResult), xor.toLowerCase());
     });
 });

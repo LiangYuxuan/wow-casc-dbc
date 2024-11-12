@@ -4,32 +4,34 @@ import crypto from 'node:crypto';
 import { mapLimit, retry } from 'async';
 import cliProgress from 'cli-progress';
 
+import BLTEReader from './blte.ts';
 import {
     getProductVersions,
     getProductCDNs,
     getConfigFile,
     getDataFile,
 } from './fetcher.ts';
-import { parseProductVersions, parseProductCDNs } from './parsers/productConfig.ts';
-import { parseCDNConfig, parseBuildConfig } from './parsers/config.ts';
-import parseArchiveIndex from './parsers/archiveIndex.ts';
-import parseEncodingFile from './parsers/encodingFile.ts';
-import parseRootFile, { LocaleFlags, ContentFlags } from './parsers/rootFile.ts';
 import getNameHash from './jenkins96.ts';
-import BLTEReader from './blte.ts';
-import WDCReader from './wdc.ts';
+import parseArchiveIndex from './parsers/archiveIndex.ts';
+import { parseCDNConfig, parseBuildConfig } from './parsers/config.ts';
+import parseEncodingFile from './parsers/encodingFile.ts';
+import { parseProductVersions, parseProductCDNs } from './parsers/productConfig.ts';
+import parseRootFile, { LocaleFlags, ContentFlags } from './parsers/rootFile.ts';
 import { resolveCDNHost, formatFileSize } from './utils.ts';
+import WDCReader from './wdc.ts';
 
-import type { Version } from './parsers/productConfig.ts';
-import type { FileInfo } from './parsers/rootFile.ts';
-import type { MissingKeyBlock } from './blte.ts';
 import type ADBReader from './adb.ts';
+import type { MissingKeyBlock } from './blte.ts';
+import type { ArchiveIndex } from './parsers/archiveIndex.ts';
+import type { EncodingData } from './parsers/encodingFile.ts';
+import type { Version } from './parsers/productConfig.ts';
+import type { FileInfo, RootData } from './parsers/rootFile.ts';
 
 interface ClientPreloadData {
     prefixes: string[],
-    archives: ReturnType<typeof parseArchiveIndex>,
-    encoding: ReturnType<typeof parseEncodingFile>,
-    rootFile: ReturnType<typeof parseRootFile>,
+    archives: Map<string, ArchiveIndex>,
+    encoding: EncodingData,
+    rootFile: RootData,
 }
 
 interface FileFetchResultFull {
@@ -53,7 +55,12 @@ enum LogLevel {
     debug = 3,
 }
 
-const textLogLevel = ['ERROR', 'WARN', 'INFO', 'DEBUG'] as const;
+const textLogLevel = [
+    'ERROR',
+    'WARN',
+    'INFO',
+    'DEBUG',
+] as const;
 
 export default class CASCClient {
     public readonly region: string;
@@ -74,10 +81,13 @@ export default class CASCClient {
         return versions.find((version) => version.Region === region);
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public static LocaleFlags = LocaleFlags;
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public static ContentFlags = ContentFlags;
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     public static LogLevel = LogLevel;
 
     public logLevel: LogLevel;
@@ -92,11 +102,9 @@ export default class CASCClient {
     private log(level: LogLevel, message: unknown): void {
         if (level <= this.logLevel) {
             if (level <= LogLevel.error) {
-                // eslint-disable-next-line no-console
                 console.error(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
             } else {
-                // eslint-disable-next-line no-console
-                console.log(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
+                console.info(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
             }
         }
     }
@@ -191,7 +199,7 @@ export default class CASCClient {
         this.log(LogLevel.info, 'Loading root table...');
         const rootCKey = buildConfig.root;
         const rootEKeys = encoding.cKey2EKey.get(rootCKey);
-        assert(rootEKeys, 'Failing to find EKey for root table.');
+        assert(rootEKeys !== undefined, 'Failing to find EKey for root table.');
         const rootEKey = typeof rootEKeys === 'string' ? rootEKeys : rootEKeys[0];
         const rootBuffer = await getDataFile(prefixes, rootEKey, 'build', this.version.BuildConfig, {
             name: 'root',
@@ -260,8 +268,8 @@ export default class CASCClient {
             const keyRow = keysReader.rows.get(keyID);
 
             if (keyRow) {
-                assert(Array.isArray(lookupRow) && lookupRow[0], `Invalid TACTKeyLookup table row at id ${keyID.toString()}`);
-                assert(Array.isArray(keyRow) && keyRow[0], `Invalid TACTKey table row at id ${keyID.toString()}`);
+                assert(Array.isArray(lookupRow) && lookupRow.length > 0, `Invalid TACTKeyLookup table row at id ${keyID.toString()}`);
+                assert(Array.isArray(keyRow) && keyRow.length > 0, `Invalid TACTKey table row at id ${keyID.toString()}`);
 
                 const keyName = lookupRow[0].data.toString(16).padStart(16, '0');
                 const keyHexLE = keyRow[0].data.toString(16).padStart(32, '0');
@@ -336,7 +344,7 @@ export default class CASCClient {
 
         const { prefixes, encoding, archives } = this.preload;
         const eKeys = encoding.cKey2EKey.get(cKey);
-        assert(eKeys, `Failing to find encoding key for ${cKey}`);
+        assert(eKeys !== undefined, `Failing to find encoding key for ${cKey}`);
 
         const eKey = typeof eKeys === 'string' ? eKeys : eKeys[0];
 
@@ -388,3 +396,16 @@ export default class CASCClient {
         };
     }
 }
+
+export type {
+    Version,
+    ClientPreloadData,
+    ArchiveIndex,
+    EncodingData,
+    RootData,
+    FileInfo,
+    FileFetchResultFull,
+    FileFetchResultPartial,
+    FileFetchResult,
+    MissingKeyBlock,
+};

@@ -1,5 +1,7 @@
 import assert from 'node:assert';
 
+const ADB_MAGIC = 0x58465448;
+
 export interface HotfixEntry {
     regionID: number,
     pushID: number,
@@ -10,8 +12,6 @@ export interface HotfixEntry {
     recordState: number,
     data: Buffer,
 }
-
-const ADB_MAGIC = 0x58465448;
 
 export default class ADBReader {
     public build: number;

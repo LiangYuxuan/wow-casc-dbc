@@ -1,9 +1,7 @@
-/* eslint-disable no-bitwise */
-
 import assert from 'node:assert';
 
-import type { MissingKeyBlock } from './blte.ts';
 import type ADBReader from './adb.ts';
+import type { MissingKeyBlock } from './blte.ts';
 
 const WDC5_MAGIC = 0x57444335;
 
@@ -143,6 +141,7 @@ interface HotfixDelete {
 
 type Hotfix = HotfixModify | HotfixDelete;
 
+/* eslint-disable no-bitwise */
 const readBitpackedValue = (
     buffer: Buffer,
     fieldOffsetBits: number,
@@ -175,6 +174,7 @@ const readBitpackedValue = (
         ? BigInt.asIntN(fieldSizeBits, value >> BigInt(bitOffset))
         : BigInt.asUintN(fieldSizeBits, value >> BigInt(bitOffset));
 };
+/* eslint-enable no-bitwise */
 
 export default class WDCReader {
     public readonly tableHash: number;
@@ -228,7 +228,9 @@ export default class WDCReader {
         this.layoutHash = layoutHash;
         this.locale = locale;
 
+        // eslint-disable-next-line no-bitwise
         const isNormal = !(flags & 0x1);
+        // eslint-disable-next-line no-bitwise
         const hasRelationshipData = !!(flags & 0x2);
 
         this.isNormal = isNormal;
@@ -596,10 +598,11 @@ export default class WDCReader {
                                     };
                                 }
 
-                                if (!recordID && fieldIndex === idIndex) {
+                                if (recordID === undefined && fieldIndex === idIndex) {
                                     recordID = value;
                                 }
 
+                                // eslint-disable-next-line no-bitwise
                                 const fieldOffset = fieldInfo.fieldOffsetBits >>> 3;
                                 const offset = prevRecordDataSize - totalRecordDataSize
                                     + (recordSize * recordIndex) + fieldOffset + value;
@@ -612,7 +615,7 @@ export default class WDCReader {
                             }
                             case 'commonData': {
                                 const value = (
-                                    recordID
+                                    recordID !== undefined
                                         ? commonData.get(fieldIndex)?.get(recordID)
                                         : undefined
                                 )
@@ -661,7 +664,7 @@ export default class WDCReader {
                                     value = fieldPalletData[value];
                                 }
 
-                                if (!recordID && fieldIndex === idIndex) {
+                                if (recordID === undefined && fieldIndex === idIndex) {
                                     recordID = value;
                                 }
 
@@ -681,7 +684,7 @@ export default class WDCReader {
                     this.rows.set(recordID, recordData);
 
                     const foreignID = relationshipMap.get(recordIndex);
-                    if (foreignID) {
+                    if (foreignID !== undefined) {
                         this.relationships.set(recordID, foreignID);
                     }
                 } else {
@@ -697,7 +700,7 @@ export default class WDCReader {
                     this.rows.set(recordID, recordData);
 
                     const foreignID = relationshipMap.get(recordIndex);
-                    if (foreignID) {
+                    if (foreignID !== undefined) {
                         this.relationships.set(recordID, foreignID);
                     }
                 }
@@ -749,7 +752,7 @@ export default class WDCReader {
         }
 
         const dst = this.copyTable.get(id);
-        if (dst) {
+        if (dst !== undefined) {
             return this.rows.get(dst);
         }
         return this.rows.get(id);
@@ -757,9 +760,29 @@ export default class WDCReader {
 
     getRowRelationship(id: number): number | undefined {
         const dst = this.copyTable.get(id);
-        if (dst) {
+        if (dst !== undefined) {
             return this.relationships.get(dst);
         }
         return this.relationships.get(id);
     }
 }
+
+export type {
+    FieldStructure,
+    FieldStorageInfo,
+    FieldStorageInfoCompressionNone,
+    FieldStorageInfoCompressionBitpacked,
+    FieldStorageInfoCompressionCommonData,
+    FieldStorageInfoCompressionBitpackedIndexed,
+    FieldStorageInfoCompressionBitpackedIndexedArray,
+    FieldStorageInfoCompressionBitpackedSigned,
+    ParsedField,
+    ParsedFieldNone,
+    ParsedFieldCommonData,
+    ParsedFieldBitpacked,
+    ParsedFieldBitpackedArray,
+    SparseRow,
+    Hotfix,
+    HotfixModify,
+    HotfixDelete,
+};

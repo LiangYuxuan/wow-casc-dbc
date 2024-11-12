@@ -16,7 +16,7 @@ const parseConfig = (text: string): Record<string, string> => {
         .split(/\r?\n/)
         .filter((line) => line.trim().length !== 0 && !line.startsWith('#'))
         .forEach((line) => {
-            const match = line.match(/([^\s]+)\s?=\s?(.*)/);
+            const match = /([^\s]+)\s?=\s?(.*)/.exec(line);
             assert(match !== null, 'Invalid token encountered parsing CDN config');
 
             const [key, value] = match.slice(1);
@@ -39,7 +39,7 @@ interface CDNConfig {
     patchFileIndexSize: string,
 }
 
-export const parseCDNConfig = (
+const parseCDNConfig = (
     text: string,
 ): CDNConfig => parseConfig(text) as unknown as CDNConfig;
 
@@ -68,6 +68,8 @@ interface BuildConfig {
     [key: `vfs${number}` | `vfs${number}Size`]: string,
 }
 
-export const parseBuildConfig = (
+const parseBuildConfig = (
     text: string,
 ): BuildConfig => parseConfig(text) as unknown as BuildConfig;
+
+export { parseCDNConfig, parseBuildConfig };

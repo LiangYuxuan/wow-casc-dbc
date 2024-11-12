@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 import assert from 'node:assert';
 import crypto from 'node:crypto';
 
@@ -5,7 +7,7 @@ import BLTEReader from '../blte.ts';
 
 const MFST_MAGIC = 0x4d465354;
 
-export const ContentFlags = {
+const ContentFlags = {
     Install: 0x4,
     LoadOnWindows: 0x8,
     LoadOnMacOS: 0x10,
@@ -20,9 +22,9 @@ export const ContentFlags = {
     UncommonResolution: 0x20000000,
     Bundle: 0x40000000,
     NoCompression: 0x80000000,
-};
+} as const;
 
-export const LocaleFlags = {
+const LocaleFlags = {
     enUS: 0x2,
     koKR: 0x4,
     frFR: 0x10,
@@ -38,9 +40,9 @@ export const LocaleFlags = {
     ptBR: 0x4000,
     itIT: 0x8000,
     ptPT: 0x10000,
-};
+} as const;
 
-export interface FileInfo {
+interface FileInfo {
     cKey: string,
     contentFlags: number,
     localeFlags: number,
@@ -164,3 +166,7 @@ const parseRootFile = (inputBuffer: Buffer, eKey: string, cKey: string): RootDat
 };
 
 export default parseRootFile;
+
+export { ContentFlags, LocaleFlags };
+
+export type { FileInfo, RootData };
