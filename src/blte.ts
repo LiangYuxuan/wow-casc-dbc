@@ -178,14 +178,7 @@ export default class BLTEReader {
 
             if (allowMissingKey) {
                 const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
-                if (buffer instanceof Buffer) {
-                    assert(
-                        buffer.byteLength === block.decompressedSize,
-                        `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize.toString()}, got ${buffer.byteLength.toString()}`,
-                    );
-
-                    this.buffer = Buffer.concat([this.buffer, buffer]);
-                } else {
+                if (typeof buffer === 'string') {
                     missingKeyBlocks.push({
                         offset: this.buffer.byteLength,
                         size: block.decompressedSize,
@@ -197,6 +190,13 @@ export default class BLTEReader {
                         this.buffer,
                         Buffer.alloc(block.decompressedSize),
                     ]);
+                } else {
+                    assert(
+                        buffer.byteLength === block.decompressedSize,
+                        `[BLTE]: Invalid decompressed size: expected ${block.decompressedSize.toString()}, got ${buffer.byteLength.toString()}`,
+                    );
+
+                    this.buffer = Buffer.concat([this.buffer, buffer]);
                 }
             } else {
                 const buffer = this.processBlock(blockBuffer, blockIndex, allowMissingKey);
