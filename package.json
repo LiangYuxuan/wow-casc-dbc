@@ -1,6 +1,6 @@
 {
   "name": "@rhyster/wow-casc-dbc",
-  "version": "2.6.11",
+  "version": "2.6.12",
   "description": "Fetch World of Warcraft data files from CASC and parse DBC/DB2 files.",
   "type": "module",
   "exports": {
@@ -37,7 +37,7 @@
   "author": "Rhythm",
   "license": "MIT",
   "devDependencies": {
-    "@rhyster/eslint-config": "^1.4.12",
+    "@rhyster/eslint-config": "^1.4.14",
     "@types/async": "^3.2.24",
     "@types/cli-progress": "^3.11.6",
     "@types/node": "^22.10.1",
