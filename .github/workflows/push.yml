@@ -31,6 +31,6 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
 
-      - uses: butlerlogic/action-autotag@1.1.2
+      - uses: butlerlogic/action-autotag@1.1.4
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
