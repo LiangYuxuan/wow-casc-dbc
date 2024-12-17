@@ -14,10 +14,11 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
-    "build": "unbuild",
+    "build": "unbuild && tsc --project .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "tsx --test"
