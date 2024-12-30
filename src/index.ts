@@ -11,6 +11,8 @@ export type {
     ClientPreloadData,
     ArchiveIndex,
     EncodingData,
+    InstallFile,
+    InstallData,
     RootData,
     FileInfo,
     FileFetchResultFull,

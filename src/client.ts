@@ -15,6 +15,7 @@ import getNameHash from './jenkins96.ts';
 import parseArchiveIndex from './parsers/archiveIndex.ts';
 import { parseCDNConfig, parseBuildConfig } from './parsers/config.ts';
 import parseEncodingFile from './parsers/encodingFile.ts';
+import parseInstallFile from './parsers/installFile.ts';
 import { parseProductVersions, parseProductCDNs } from './parsers/productConfig.ts';
 import parseRootFile, { LocaleFlags, ContentFlags } from './parsers/rootFile.ts';
 import { resolveCDNHost, formatFileSize } from './utils.ts';
@@ -24,6 +25,7 @@ import type ADBReader from './adb.ts';
 import type { MissingKeyBlock } from './blte.ts';
 import type { ArchiveIndex } from './parsers/archiveIndex.ts';
 import type { EncodingData } from './parsers/encodingFile.ts';
+import type { InstallFile, InstallData } from './parsers/installFile.ts';
 import type { Version } from './parsers/productConfig.ts';
 import type { FileInfo, RootData } from './parsers/rootFile.ts';
 
@@ -32,6 +34,7 @@ interface ClientPreloadData {
     archives: Map<string, ArchiveIndex>,
     encoding: EncodingData,
     rootFile: RootData,
+    install: InstallData,
 }
 
 interface FileFetchResultFull {
@@ -196,11 +199,23 @@ export default class CASCClient {
         const encoding = parseEncodingFile(encodingBuffer, encodingEKey, encodingCKey);
         this.log(LogLevel.info, `Parsed encoding table (${encoding.cKey2EKey.size.toString()} entries)`);
 
+        const getBuildConfigKeys = (configText: string): [string, string] => {
+            if (configText.includes(' ')) {
+                const [cKey, eKey] = configText.split(' ');
+                return [cKey, eKey];
+            }
+
+            const cKey = configText;
+            const eKeys = encoding.cKey2EKey.get(cKey);
+            assert(eKeys !== undefined, `Failing to find encoding key for ${cKey}`);
+
+            const eKey = typeof eKeys === 'string' ? eKeys : eKeys[0];
+
+            return [cKey, eKey];
+        };
+
         this.log(LogLevel.info, 'Loading root table...');
-        const rootCKey = buildConfig.root;
-        const rootEKeys = encoding.cKey2EKey.get(rootCKey);
-        assert(rootEKeys !== undefined, 'Failing to find EKey for root table.');
-        const rootEKey = typeof rootEKeys === 'string' ? rootEKeys : rootEKeys[0];
+        const [rootCKey, rootEKey] = getBuildConfigKeys(buildConfig.root);
         const rootBuffer = await getDataFile(prefixes, rootEKey, 'build', this.version.BuildConfig, {
             name: 'root',
             showProgress: this.logLevel >= LogLevel.info,
@@ -212,11 +227,25 @@ export default class CASCClient {
         const rootFile = parseRootFile(rootBuffer, rootEKey, rootCKey);
         this.log(LogLevel.info, `Parsed root file (${rootFile.fileDataID2CKey.size.toString()} entries, ${rootFile.nameHash2FileDataID.size.toString()} hashes)`);
 
+        this.log(LogLevel.info, 'Loading install manifest...');
+        const [installCKey, installEKey] = getBuildConfigKeys(buildConfig.install);
+        const installBuffer = await getDataFile(prefixes, installEKey, 'build', this.version.BuildConfig, {
+            name: 'install',
+            showProgress: this.logLevel >= LogLevel.info,
+            showAttemptFail: this.logLevel >= LogLevel.warn,
+        });
+        this.log(LogLevel.info, `Loaded install manifest (${formatFileSize(installBuffer.byteLength)})`);
+
+        this.log(LogLevel.info, 'Parsing install manifest...');
+        const install = parseInstallFile(installBuffer, installEKey, installCKey);
+        this.log(LogLevel.info, `Parsed install manifest (${install.tags.length.toString()} tags, ${install.files.length.toString()} files)`);
+
         this.preload = {
             prefixes,
             archives,
             encoding,
             rootFile,
+            install,
         };
     }
 
@@ -337,6 +366,14 @@ export default class CASCClient {
         return rootFile.fileDataID2CKey.get(fileDataID);
     }
 
+    getContentKeysFromInstall(name: string): InstallFile[] | undefined {
+        assert(this.preload, 'Client not initialized');
+
+        const { install } = this.preload;
+
+        return install.files.filter((file) => file.name === name);
+    }
+
     async getFileByContentKey(cKey: string, allowMissingKey?: false): Promise<FileFetchResultFull>;
     async getFileByContentKey(cKey: string, allowMissingKey: true): Promise<FileFetchResult>;
     async getFileByContentKey(cKey: string, allowMissingKey = false): Promise<FileFetchResult> {
@@ -402,6 +439,8 @@ export type {
     ClientPreloadData,
     ArchiveIndex,
     EncodingData,
+    InstallFile,
+    InstallData,
     RootData,
     FileInfo,
     FileFetchResultFull,
