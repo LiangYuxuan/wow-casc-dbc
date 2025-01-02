@@ -135,8 +135,8 @@ export default class DBDParser {
         const versionChunk = chunks.find((chunk) => chunk.find((line) => {
             const layoutsMatch = PATTERN_LAYOUT.exec(line);
             const layouts = layoutsMatch?.[1].split(',').map((v) => v.trim().toLowerCase());
-            return layouts?.includes(layoutHashHex);
-        }));
+            return layouts?.includes(layoutHashHex) === true;
+        }) !== undefined);
 
         assert(versionChunk, `No version definition found for layout hash ${layoutHashHex}`);
 
