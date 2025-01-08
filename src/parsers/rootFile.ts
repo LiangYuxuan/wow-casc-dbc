@@ -72,18 +72,35 @@ const parseRootFile = (inputBuffer: Buffer, eKey: string, cKey: string): RootDat
         const newFormat = firstEntry < 100; // post 10.1.7
 
         const headerSize = newFormat ? firstEntry : 12;
-        // const version = newFormat ? buffer.readUInt32LE(8) : 0;
+        const version = newFormat ? buffer.readUInt32LE(8) : 0;
         const totalFileCount = newFormat ? buffer.readUInt32LE(12) : firstEntry;
         const namedFileCount = newFormat ? buffer.readUInt32LE(16) : buffer.readUInt32LE(8);
+
+        assert(version >= 0 && version <= 2, `Invalid root version: ${version.toString()}`);
 
         const allowNonNamedFiles = totalFileCount !== namedFileCount;
 
         let pointer = headerSize;
         while (pointer < buffer.byteLength) {
             const numRecords = buffer.readUInt32LE(pointer);
-            const contentFlags = buffer.readUInt32LE(pointer + 4);
-            const localeFlags = buffer.readUInt32LE(pointer + 8);
-            pointer += 12;
+
+            let contentFlags = 0;
+            let localeFlags = 0;
+            if (version >= 2) {
+                localeFlags = buffer.readUInt32LE(pointer + 4);
+
+                const contentFlags1 = buffer.readUInt32LE(pointer + 8);
+                const contentFlags2 = buffer.readUInt32LE(pointer + 12);
+                const contentFlags3 = buffer.readUInt8(pointer + 16);
+                // eslint-disable-next-line no-bitwise
+                contentFlags = (contentFlags1 | contentFlags2 | (contentFlags3 << 17));
+
+                pointer += 17;
+            } else {
+                contentFlags = buffer.readUInt32LE(pointer + 4);
+                localeFlags = buffer.readUInt32LE(pointer + 8);
+                pointer += 12;
+            }
 
             const fileDataIDs = [];
             let currFileDataID = -1;
