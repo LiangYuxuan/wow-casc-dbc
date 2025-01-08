@@ -62,7 +62,7 @@ const parseArchiveIndex = (buffer: Buffer, cKey: string): Map<string, ArchiveInd
     const numElements = buffer.readUInt32LE(versionOffset + NUM_ELEMENTS_OFFSET);
     const footerChecksum = buffer.toString('hex', versionOffset + CHECKSUM_OFFSET);
 
-    assert(version === 1, `Invalid version: ${version.toString()} in ${cKey}`);
+    assert(version === 1, `Invalid archive index version: ${version.toString()} in ${cKey}`);
 
     const entrySize = keySize + offsetBytes + sizeBytes;
     const blockSize = blockSizeKB * 1024;

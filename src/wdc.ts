@@ -201,7 +201,7 @@ export default class WDCReader {
 
     constructor(buffer: Buffer, blocks: MissingKeyBlock[] = [], adb?: ADBReader) {
         const magic = buffer.readUInt32BE(0);
-        // const version = buffer.readUInt32LE(4);
+        const version = buffer.readUInt32LE(4);
         // const schema = buffer.toString('ascii', 8, 136);
         // const recordCount = buffer.readUInt32LE(136);
         const fieldCount = buffer.readUInt32LE(140);
@@ -222,7 +222,8 @@ export default class WDCReader {
         const palletDataSize = buffer.readUInt32LE(196);
         const sectionCount = buffer.readUInt32LE(200);
 
-        assert(magic === WDC5_MAGIC, `Invalid magic: ${magic.toString(16).padStart(8, '0')}`);
+        assert(magic === WDC5_MAGIC, `Invalid WDC5 magic: ${magic.toString(16).padStart(8, '0')}`);
+        assert(version === 5, `Invalid WDC5 version: ${version.toString()}`);
 
         this.tableHash = tableHash;
         this.layoutHash = layoutHash;
