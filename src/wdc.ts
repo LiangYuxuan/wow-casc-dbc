@@ -418,9 +418,11 @@ export default class WDCReader {
                 `Invalid section offset: ${sectionPointer.toString()} != ${sectionHeader.fileOffset.toString()}`,
             );
 
-            const sectionSize = (isNormal
+            const sectionRecordSize = isNormal
                 ? (sectionHeader.recordCount * recordSize + sectionHeader.stringTableSize)
-                : (sectionHeader.offsetRecordsEnd - sectionPointer))
+                : (sectionHeader.offsetRecordsEnd - sectionPointer);
+
+            const sectionSize = sectionRecordSize
                 + sectionHeader.idListSize
                 + sectionHeader.copyTableCount * 8
                 + sectionHeader.offsetMapIDCount * 10
