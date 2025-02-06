@@ -77,11 +77,11 @@ interface FieldStorageInfoCompressionBitpackedSigned {
 }
 
 type FieldStorageInfo = FieldStorageInfoCompressionNone
-| FieldStorageInfoCompressionBitpacked
-| FieldStorageInfoCompressionCommonData
-| FieldStorageInfoCompressionBitpackedIndexed
-| FieldStorageInfoCompressionBitpackedIndexedArray
-| FieldStorageInfoCompressionBitpackedSigned;
+    | FieldStorageInfoCompressionBitpacked
+    | FieldStorageInfoCompressionCommonData
+    | FieldStorageInfoCompressionBitpackedIndexed
+    | FieldStorageInfoCompressionBitpackedIndexedArray
+    | FieldStorageInfoCompressionBitpackedSigned;
 
 interface OffsetMapEntry {
     offset: number,
@@ -111,9 +111,9 @@ interface ParsedFieldBitpackedArray {
 }
 
 type ParsedField = ParsedFieldNone
-| ParsedFieldCommonData
-| ParsedFieldBitpacked
-| ParsedFieldBitpackedArray;
+    | ParsedFieldCommonData
+    | ParsedFieldBitpacked
+    | ParsedFieldBitpackedArray;
 
 interface SparseRow {
     type: 'sparse',
@@ -418,11 +418,9 @@ export default class WDCReader {
                 `Invalid section offset: ${sectionPointer.toString()} != ${sectionHeader.fileOffset.toString()}`,
             );
 
-            const sectionSize = (
-                isNormal
-                    ? (sectionHeader.recordCount * recordSize + sectionHeader.stringTableSize)
-                    : (sectionHeader.offsetRecordsEnd - sectionPointer)
-            )
+            const sectionSize = (isNormal
+                ? (sectionHeader.recordCount * recordSize + sectionHeader.stringTableSize)
+                : (sectionHeader.offsetRecordsEnd - sectionPointer))
                 + sectionHeader.idListSize
                 + sectionHeader.copyTableCount * 8
                 + sectionHeader.offsetMapIDCount * 10
