@@ -615,12 +615,13 @@ export default class WDCReader {
                                 };
                             }
                             case 'commonData': {
-                                const value = (
-                                    recordID !== undefined
-                                        ? commonData.get(fieldIndex)?.get(recordID)
-                                        : undefined
-                                )
-                                    ?? fieldInfo.defaultValue;
+                                let value = recordID !== undefined
+                                    ? commonData.get(fieldIndex)?.get(recordID)
+                                    : undefined;
+
+                                if (value === undefined) {
+                                    value = fieldInfo.defaultValue;
+                                }
                                 return {
                                     type: 'commonData',
                                     data: value,
