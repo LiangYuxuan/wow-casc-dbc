@@ -281,7 +281,7 @@ export default class DBDParser {
                             const castBuffer = getCastBuffer(
                                 typeof cell.data === 'number' ? BigInt(cell.data) : cell.data,
                                 srcSize,
-                                4 * column.arraySize,
+                                dstSize * column.arraySize,
                             );
 
                             if (dstSize > 6) {
