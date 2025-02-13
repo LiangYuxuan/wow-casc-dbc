@@ -284,20 +284,39 @@ export default class DBDParser {
                                 4 * column.arraySize,
                             );
 
-                            const values: number[] = [];
-                            if (column.isSigned) {
-                                for (let i = 0; i < column.arraySize; i += 1) {
-                                    const value = castBuffer.readIntLE(i * dstSize, dstSize);
-                                    values.push(value);
-                                }
-                            } else {
-                                for (let i = 0; i < column.arraySize; i += 1) {
-                                    const value = castBuffer.readUIntLE(i * dstSize, dstSize);
-                                    values.push(value);
-                                }
-                            }
+                            if (dstSize > 6) {
+                                assert(dstSize === 8, `Unexpected size ${dstSize.toString()} for column ${column.name}`);
 
-                            data[column.name] = values;
+                                const values: bigint[] = [];
+                                if (column.isSigned) {
+                                    for (let i = 0; i < column.arraySize; i += 1) {
+                                        const value = castBuffer.readBigInt64LE(i * dstSize);
+                                        values.push(value);
+                                    }
+                                } else {
+                                    for (let i = 0; i < column.arraySize; i += 1) {
+                                        const value = castBuffer.readBigUInt64LE(i * dstSize);
+                                        values.push(value);
+                                    }
+                                }
+
+                                data[column.name] = values;
+                            } else {
+                                const values: number[] = [];
+                                if (column.isSigned) {
+                                    for (let i = 0; i < column.arraySize; i += 1) {
+                                        const value = castBuffer.readIntLE(i * dstSize, dstSize);
+                                        values.push(value);
+                                    }
+                                } else {
+                                    for (let i = 0; i < column.arraySize; i += 1) {
+                                        const value = castBuffer.readUIntLE(i * dstSize, dstSize);
+                                        values.push(value);
+                                    }
+                                }
+
+                                data[column.name] = values;
+                            }
                         } else if (typeof cell.data === 'number') {
                             data[column.name] = castIntegerBySize(
                                 cell.data,
