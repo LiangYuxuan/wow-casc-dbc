@@ -1,5 +1,8 @@
 {
     "extends": [
         "github>LiangYuxuan/renovate-config"
+    ],
+    "schedule": [
+        "* * * * 0"
     ]
 }
