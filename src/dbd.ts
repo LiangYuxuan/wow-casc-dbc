@@ -163,9 +163,9 @@ export default class DBDParser {
                 const size = sizeText ? parseInt(sizeText, 10) : undefined;
                 const arraySize = arraySizeText ? parseInt(arraySizeText, 10) : undefined;
 
-                const isID = !!annotations.includes('id');
+                const isID = annotations.includes('id');
                 const isInline = !annotations.includes('noninline');
-                const isRelation = !!annotations.includes('relation');
+                const isRelation = annotations.includes('relation');
                 const isSigned = !unsigned;
 
                 this.columns.push({

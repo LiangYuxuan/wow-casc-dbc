@@ -13,7 +13,7 @@ const JEDEC = [
 export const formatFileSize = (input: number) => {
     if (Number.isNaN(input)) return '';
 
-    let size = Number(input);
+    let size = input;
     const isNegative = size < 0;
     const result = [];
 
