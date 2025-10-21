@@ -28,7 +28,6 @@ jobs:
 
       - uses: JS-DevTools/npm-publish@v4
         with:
-          token: ${{ secrets.NPM_TOKEN }}
           access: public
 
       - uses: butlerlogic/action-autotag@1.1.2
