@@ -22,6 +22,8 @@ jobs:
         with:
           node-version: 22.21.0
 
+      - run: npm install -g npm@latest
+
       - run: pnpm install
 
       - run: pnpm lint
