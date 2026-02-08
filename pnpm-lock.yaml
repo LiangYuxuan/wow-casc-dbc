@@ -16,8 +16,8 @@ importers:
         version: 3.12.0
     devDependencies:
       '@rhyster/eslint-config':
-        specifier: ^1.8.31
-        version: 1.8.31(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(@typescript-eslint/utils@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3)
+        specifier: ^1.8.32
+        version: 1.8.32(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(@typescript-eslint/utils@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3)
       '@types/async':
         specifier: ^3.2.25
         version: 3.2.25
@@ -25,8 +25,8 @@ importers:
         specifier: ^3.11.6
         version: 3.11.6
       '@types/node':
-        specifier: ^24.10.9
-        version: 24.10.9
+        specifier: ^24.10.12
+        version: 24.10.12
       eslint:
         specifier: ^9.39.2
         version: 9.39.2(jiti@2.5.1)
@@ -445,8 +445,8 @@ packages:
   '@napi-rs/wasm-runtime@0.2.11':
     resolution: {integrity: sha512-9DPkXtvHydrcOsopiYpUgPHpmj0HWZKMUnL2dZqpvC42lsratuBG06V5ipyno0fUek5VlFsNQ+AcFATSrJXgMA==}
 
-  '@rhyster/eslint-config@1.8.31':
-    resolution: {integrity: sha512-xuNLun+azbkZjIEZmQiE7MBAX57+A3cOzOee8l04XA14qUDxpw7P7pSq7F+81TCvB0slnlViwE2oMfxoz3dZsg==}
+  '@rhyster/eslint-config@1.8.32':
+    resolution: {integrity: sha512-rqPSQOblJI45u+A28mtj2Ervkgwy0gzRgaBO6/m0NV4p2IDfG/b/mSj3bQFjzPalrL2nakWsHkxcrB72ybQZ5g==}
     peerDependencies:
       eslint: '>= 9'
 
@@ -640,8 +640,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@24.10.9':
-    resolution: {integrity: sha512-ne4A0IpG3+2ETuREInjPNhUGis1SFjv1d5asp8MzEAGtOZeTeHVDOYqOgqfhvseqg/iXty2hjBf1zAOb7RNiNw==}
+  '@types/node@24.10.12':
+    resolution: {integrity: sha512-68e+T28EbdmLSTkPgs3+UacC6rzmqrcWFPQs1C8mwJhI/r5Uxr0yEuQotczNRROd1gq30NGxee+fo0rSIxpyAw==}
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -683,10 +683,6 @@ packages:
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
       typescript: '>=4.8.4 <6.0.0'
-
-  '@typescript-eslint/types@8.53.1':
-    resolution: {integrity: sha512-jr/swrr2aRmUAUjW5/zQHbMaui//vQlsZcJKijZf3M26bnmLj8LyZUpj8/Rd6uzaek06OWsqdofN/Thenm5O8A==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@typescript-eslint/types@8.54.0':
     resolution: {integrity: sha512-PDUI9R1BVjqu7AUDsRBbKMtwmjWcn4J3le+5LpcFgWULN3LvHC5rkc9gCVxbrsrGmO1jfPybN5s6h4Jy+OnkAA==}
@@ -1234,8 +1230,8 @@ packages:
     resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
     engines: {node: '>=18'}
 
-  globals@17.2.0:
-    resolution: {integrity: sha512-tovnCz/fEq+Ripoq+p/gN1u7l6A7wwkoBT9pRCzTHzsD/LvADIzXZdjmRymh5Ztf0DYC3Rwg5cZRYjxzBmzbWg==}
+  globals@17.3.0:
+    resolution: {integrity: sha512-yMqGUQVVCkD4tqjOJf3TnrvaaHDMYp4VlUSObbkIiuCPe/ofdMBFIAcBbCSRFWOnos6qRiTVStDwqPLUclaxIw==}
     engines: {node: '>=18'}
 
   globrex@0.1.2:
@@ -2102,7 +2098,7 @@ snapshots:
       '@tybys/wasm-util': 0.9.0
     optional: true
 
-  '@rhyster/eslint-config@1.8.31(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(@typescript-eslint/utils@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3)':
+  '@rhyster/eslint-config@1.8.32(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(@typescript-eslint/utils@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3)':
     dependencies:
       '@eslint/js': 9.39.2
       '@stylistic/eslint-plugin': 5.7.1(eslint@9.39.2(jiti@2.5.1))
@@ -2112,7 +2108,7 @@ snapshots:
       eslint-plugin-import-x: 4.16.1(@typescript-eslint/utils@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.5.1))
       eslint-plugin-n: 17.23.2(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3)
       eslint-plugin-vue: 10.7.0(@stylistic/eslint-plugin@5.7.1(eslint@9.39.2(jiti@2.5.1)))(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.5.1))(vue-eslint-parser@10.2.0(eslint@9.39.2(jiti@2.5.1)))
-      globals: 17.2.0
+      globals: 17.3.0
       typescript-eslint: 8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3)
       vue-eslint-parser: 10.2.0(eslint@9.39.2(jiti@2.5.1))
     transitivePeerDependencies:
@@ -2233,7 +2229,7 @@ snapshots:
   '@stylistic/eslint-plugin@5.7.1(eslint@9.39.2(jiti@2.5.1))':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.2(jiti@2.5.1))
-      '@typescript-eslint/types': 8.53.1
+      '@typescript-eslint/types': 8.54.0
       eslint: 9.39.2(jiti@2.5.1)
       eslint-visitor-keys: 4.2.1
       espree: 10.4.0
@@ -2251,13 +2247,13 @@ snapshots:
 
   '@types/cli-progress@3.11.6':
     dependencies:
-      '@types/node': 24.10.9
+      '@types/node': 24.10.12
 
   '@types/estree@1.0.8': {}
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@24.10.9':
+  '@types/node@24.10.12':
     dependencies:
       undici-types: 7.16.0
 
@@ -2320,8 +2316,6 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
-
-  '@typescript-eslint/types@8.53.1': {}
 
   '@typescript-eslint/types@8.54.0': {}
 
@@ -2751,7 +2745,7 @@ snapshots:
 
   eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.54.0(eslint@9.39.2(jiti@2.5.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.5.1)):
     dependencies:
-      '@typescript-eslint/types': 8.53.1
+      '@typescript-eslint/types': 8.54.0
       comment-parser: 1.4.1
       debug: 4.4.3
       eslint: 9.39.2(jiti@2.5.1)
@@ -2919,7 +2913,7 @@ snapshots:
 
   globals@15.15.0: {}
 
-  globals@17.2.0: {}
+  globals@17.3.0: {}
 
   globrex@0.1.2: {}
 
