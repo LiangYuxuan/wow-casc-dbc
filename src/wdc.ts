@@ -5,6 +5,12 @@ import type { MissingKeyBlock } from './blte.ts';
 
 const WDC5_MAGIC = 0x57444335;
 
+interface WDCReaderOptions {
+    blocks?: MissingKeyBlock[],
+    adb?: ADBReader,
+    detectIsZeroedByData?: boolean,
+}
+
 interface MergedMissingKeyBlock {
     offset: number,
     size: number,
@@ -181,6 +187,21 @@ const readBitpackedValue = (
 };
 /* eslint-enable no-bitwise */
 
+const isDataRangeAllZero = (
+    buffer: Buffer,
+    offset: number,
+    length: number,
+): boolean => {
+    const end = offset + length;
+
+    for (let pointer = offset; pointer < end; pointer += 1) {
+        if (buffer[pointer] !== 0x00) {
+            return false;
+        }
+    }
+    return true;
+};
+
 export default class WDCReader {
     public readonly tableHash: number;
 
@@ -204,27 +225,43 @@ export default class WDCReader {
 
     public readonly hotfixes = new Map<number, Hotfix>();
 
-    constructor(buffer: Buffer, blocks: MissingKeyBlock[] = [], adb?: ADBReader) {
+    constructor(
+        buffer: Buffer,
+        blocksOrOption?: MissingKeyBlock[] | WDCReaderOptions,
+        adbInput?: ADBReader,
+    ) {
+        const options: WDCReaderOptions = (
+            blocksOrOption === undefined || Array.isArray(blocksOrOption)
+        )
+            ? { blocks: blocksOrOption, adb: adbInput }
+            : blocksOrOption;
+
+        const blocks = options.blocks ?? [];
+        const adb = options.adb ?? adbInput;
+        const detectIsZeroedByData = options.detectIsZeroedByData ?? false;
+
         const mergedBlocks: MergedMissingKeyBlock[] = [];
-        blocks
-            .sort((a, b) => a.offset - b.offset)
-            .forEach(({ offset, size }) => {
-                const lastBlock = mergedBlocks[mergedBlocks.length - 1];
-                if (
-                    mergedBlocks.length > 0
-                    && lastBlock.offset + lastBlock.size >= offset
-                ) {
-                    lastBlock.size = Math.max(
-                        lastBlock.offset + lastBlock.size,
-                        offset + size,
-                    ) - lastBlock.offset;
-                } else {
-                    mergedBlocks.push({
-                        offset,
-                        size,
-                    });
-                }
-            });
+        if (!detectIsZeroedByData) {
+            blocks
+                .sort((a, b) => a.offset - b.offset)
+                .forEach(({ offset, size }) => {
+                    const lastBlock = mergedBlocks[mergedBlocks.length - 1];
+                    if (
+                        mergedBlocks.length > 0
+                        && lastBlock.offset + lastBlock.size >= offset
+                    ) {
+                        lastBlock.size = Math.max(
+                            lastBlock.offset + lastBlock.size,
+                            offset + size,
+                        ) - lastBlock.offset;
+                    } else {
+                        mergedBlocks.push({
+                            offset,
+                            size,
+                        });
+                    }
+                });
+        }
 
         const magic = buffer.readUInt32BE(0);
         const version = buffer.readUInt32LE(4);
@@ -458,14 +495,19 @@ export default class WDCReader {
                 ? recordSize * sectionHeader.recordCount
                 : sectionHeader.offsetRecordsEnd - sectionHeader.fileOffset;
 
-            const isZeroed = mergedBlocks.some((block) => {
-                const sectionStart = sectionHeader.fileOffset;
-                const sectionEnd = sectionStart + sectionSize;
-                const blockStart = block.offset;
-                const blockEnd = blockStart + block.size;
+            const isZeroed = detectIsZeroedByData
+                ? (
+                    sectionHeader.tactKeyHash !== 0n
+                    && isDataRangeAllZero(buffer, sectionHeader.fileOffset, recordDataSize)
+                )
+                : mergedBlocks.some((block) => {
+                    const sectionStart = sectionHeader.fileOffset;
+                    const sectionEnd = sectionStart + sectionSize;
+                    const blockStart = block.offset;
+                    const blockEnd = blockStart + block.size;
 
-                return sectionStart >= blockStart && sectionEnd <= blockEnd;
-            });
+                    return sectionStart >= blockStart && sectionEnd <= blockEnd;
+                });
 
             if (isZeroed) {
                 sectionPointer += sectionSize;
