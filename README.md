@@ -53,6 +53,18 @@ const parser = await DBDParser.parse(reader);
 // ...
 ```
 
+If you download DB2 files from wago.tools, you need to set `detectIsZeroedByData` to let `WDCReader` detect the undecrypted blocks and ignore them.
+
+```javascript
+// ...
+
+const file = await fs.readFile('/path/to/db2/file.db2');
+const reader = new WDCReader(file, { detectIsZeroedByData: true });
+const parser = await DBDParser.parse(reader);
+
+// ...
+```
+
 ### Hotfix
 
 Applying hotfix requires `DBCache.bin` file from the client, and it seems the only way to get this is from the client. So, you need to search for `DBCache.bin` yourself, like `<WoWPath>/_retail_/Cache/ADB/enUS/DBCache.bin` or download it somewhere.
