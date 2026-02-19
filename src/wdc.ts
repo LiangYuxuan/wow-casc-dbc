@@ -5,6 +5,11 @@ import type { MissingKeyBlock } from './blte.ts';
 
 const WDC5_MAGIC = 0x57444335;
 
+interface MergedMissingKeyBlock {
+    offset: number,
+    size: number,
+}
+
 interface SectionHeader {
     tactKeyHash: bigint,
     fileOffset: number,
@@ -200,6 +205,27 @@ export default class WDCReader {
     public readonly hotfixes = new Map<number, Hotfix>();
 
     constructor(buffer: Buffer, blocks: MissingKeyBlock[] = [], adb?: ADBReader) {
+        const mergedBlocks: MergedMissingKeyBlock[] = [];
+        blocks
+            .sort((a, b) => a.offset - b.offset)
+            .forEach(({ offset, size }) => {
+                const lastBlock = mergedBlocks[mergedBlocks.length - 1];
+                if (
+                    mergedBlocks.length > 0
+                    && lastBlock.offset + lastBlock.size >= offset
+                ) {
+                    lastBlock.size = Math.max(
+                        lastBlock.offset + lastBlock.size,
+                        offset + size,
+                    ) - lastBlock.offset;
+                } else {
+                    mergedBlocks.push({
+                        offset,
+                        size,
+                    });
+                }
+            });
+
         const magic = buffer.readUInt32BE(0);
         const version = buffer.readUInt32LE(4);
         // const schema = buffer.toString('ascii', 8, 136);
@@ -432,7 +458,7 @@ export default class WDCReader {
                 ? recordSize * sectionHeader.recordCount
                 : sectionHeader.offsetRecordsEnd - sectionHeader.fileOffset;
 
-            const isZeroed = blocks.some((block) => {
+            const isZeroed = mergedBlocks.some((block) => {
                 const sectionStart = sectionHeader.fileOffset;
                 const sectionEnd = sectionStart + sectionSize;
                 const blockStart = block.offset;
