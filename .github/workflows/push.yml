@@ -35,7 +35,3 @@ jobs:
       - uses: JS-DevTools/npm-publish@v4
         with:
           access: public
-
-      - uses: butlerlogic/action-autotag@1.1.2
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
