@@ -84,8 +84,8 @@ const parseRootFile = (inputBuffer: Buffer, eKey: string, cKey: string): RootDat
         while (pointer < buffer.byteLength) {
             const numRecords = buffer.readUInt32LE(pointer);
 
-            let contentFlags = 0;
-            let localeFlags = 0;
+            let contentFlags: number;
+            let localeFlags: number;
             if (version >= 2) {
                 localeFlags = buffer.readUInt32LE(pointer + 4);
 
