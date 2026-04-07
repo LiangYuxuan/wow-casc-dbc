@@ -163,16 +163,6 @@ const readBitpackedValue = (
     const bitOffset = fieldOffsetBits & 0x7;
     const sizeBytes = Math.ceil((fieldSizeBits + bitOffset) / 8);
 
-    if (sizeBytes <= 6) {
-        // safe to be number
-        const rawValue = buffer.readUIntLE(offsetBytes, sizeBytes);
-        return Number(
-            signed
-                ? BigInt.asIntN(fieldSizeBits, BigInt(rawValue >>> bitOffset))
-                : BigInt.asUintN(fieldSizeBits, BigInt(rawValue >>> bitOffset)),
-        );
-    }
-
     // need to be bigint
     let value = 0n;
 
@@ -181,9 +171,11 @@ const readBitpackedValue = (
         value = (value << 8n) | BigInt(byte);
     }
 
-    return signed
+    const result = signed
         ? BigInt.asIntN(fieldSizeBits, value >> BigInt(bitOffset))
         : BigInt.asUintN(fieldSizeBits, value >> BigInt(bitOffset));
+
+    return fieldSizeBits <= 32 ? Number(result) : result;
 };
 /* eslint-enable no-bitwise */
 
