@@ -56,7 +56,7 @@ const castFloat = (value: number, src: number, srcSigned: boolean): number => {
     }
 
     const result = castBuffer.readFloatLE(0);
-    return Math.round(result * 100) / 100;
+    return result;
 };
 
 const castBigInt64 = (value: bigint, srcSigned: boolean, dstSigned: boolean): bigint => {
@@ -265,7 +265,7 @@ export default class DBDParser {
                             const values: number[] = [];
                             for (let i = 0; i < column.arraySize; i += 1) {
                                 const value = castBuffer.readFloatLE(i * 4);
-                                values.push(Math.round(value * 100) / 100);
+                                values.push(value);
                             }
 
                             data[column.name] = values;
@@ -401,7 +401,7 @@ export default class DBDParser {
                         for (let i = 0; i < count; i += 1) {
                             if (column.type === 'float') {
                                 const value = buffer.readFloatLE(offset);
-                                values.push(Math.round(value * 100) / 100);
+                                values.push(value);
                                 offset += 4;
                             } else if (size > 6) {
                                 assert(size === 8, `Unexpected size ${size.toString()} for column ${column.name}`);
