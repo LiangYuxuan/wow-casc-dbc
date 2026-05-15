@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import http from 'node:http';
+import https from 'node:https';
 import path from 'node:path';
 
 import cliProgress from 'cli-progress';
@@ -46,7 +46,7 @@ const requestData = async (
         },
     };
 
-    http.get(url, options, (res) => {
+    https.get(url, options, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
             if (res.headers.location !== undefined) {
                 requestData(res.headers.location, { partialOffset, partialLength, showProgress })
@@ -200,7 +200,9 @@ export const getProductVersions = async (
     region: string,
     product: string,
 ): Promise<string> => {
-    const url = `http://${region}.patch.battle.net:1119/${product}/versions`;
+    const url = region !== 'cn'
+        ? `https://${region}.version.battle.net/v2/products/${product}/versions`
+        : `https://cn.version.battlenet.com.cn/v2/products/${product}/versions`;
     const headers = new Headers();
     headers.set('User-Agent', USER_AGENT);
 
@@ -213,7 +215,9 @@ export const getProductCDNs = async (
     region: string,
     product: string,
 ): Promise<string> => {
-    const url = `http://${region}.patch.battle.net:1119/${product}/cdns`;
+    const url = region !== 'cn'
+        ? `https://${region}.version.battle.net/v2/products/${product}/cdns`
+        : `https://cn.version.battlenet.com.cn/v2/products/${product}/cdns`;
     const headers = new Headers();
     headers.set('User-Agent', USER_AGENT);
 

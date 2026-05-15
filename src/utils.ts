@@ -57,7 +57,7 @@ export const resolveCDNHost = async (
     const latencies = await Promise.allSettled(
         hosts.map(async (host) => {
             const start = Date.now();
-            await fetch(`http://${host}/`);
+            await fetch(`https://${host}/`);
             const end = Date.now();
             return {
                 host,
@@ -73,5 +73,5 @@ export const resolveCDNHost = async (
         .map((result) => result.value)
         .sort((a, b) => a.latency - b.latency);
 
-    return resolved.map((result) => `http://${result.host}/${path}`);
+    return resolved.map((result) => `https://${result.host}/${path}`);
 };
