@@ -119,7 +119,7 @@ const downloadFile = (
                     return retry({
                         times: 5,
                         interval: 3000,
-                    }, () => requestData(url, {
+                    }, async () => requestData(url, {
                         partialOffset,
                         partialLength,
                         showProgress,
