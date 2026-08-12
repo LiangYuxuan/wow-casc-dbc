@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import https from 'node:https';
 import path from 'node:path';
 
+import { retry } from 'async';
 import cliProgress from 'cli-progress';
 
 import Store from './store.ts';
@@ -115,7 +116,14 @@ const downloadFile = (
                     if (showAttemptFail === true && index > 0 && err instanceof Error) {
                         console.warn(`${new Date().toISOString()} [WARN]:`, err.message);
                     }
-                    return requestData(url, { partialOffset, partialLength, showProgress });
+                    return retry({
+                        times: 5,
+                        interval: 3000,
+                    }, () => requestData(url, {
+                        partialOffset,
+                        partialLength,
+                        showProgress,
+                    }));
                 }),
             Promise.reject<Buffer>(new Error('')),
         );
