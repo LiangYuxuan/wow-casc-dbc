@@ -1,6 +1,6 @@
 {
   "name": "@rhyster/wow-casc-dbc",
-  "version": "2.16.17",
+  "version": "2.16.18",
   "description": "Fetch World of Warcraft data files from CASC and parse DBC/DB2 files.",
   "type": "module",
   "exports": {
@@ -51,5 +51,5 @@
     "async": "^3.2.6",
     "cli-progress": "^3.12.0"
   },
-  "packageManager": "pnpm@12.14.0"
+  "packageManager": "pnpm@12.15.0"
 }
