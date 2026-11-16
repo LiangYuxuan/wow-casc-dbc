@@ -105,9 +105,9 @@ export default class CASCClient {
     private log(level: LogLevel, message: unknown): void {
         if (level <= this.logLevel) {
             if (level <= LogLevel.error) {
-                console.error(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
+                console.error(Temporal.Now.instant().toString(), `[${textLogLevel[level]}]:`, message);
             } else {
-                console.info(`${new Date().toISOString()} [${textLogLevel[level]}]:`, message);
+                console.info(Temporal.Now.instant().toString(), `[${textLogLevel[level]}]:`, message);
             }
         }
     }

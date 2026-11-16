@@ -114,7 +114,7 @@ const downloadFile = (
             (prev, url, index) => prev
                 .catch((err: unknown) => {
                     if (showAttemptFail === true && index > 0 && err instanceof Error) {
-                        console.warn(`${new Date().toISOString()} [WARN]:`, err.message);
+                        console.warn(Temporal.Now.instant().toString(), '[WARN]:', err.message);
                     }
                     return retry({
                         times: 5,
