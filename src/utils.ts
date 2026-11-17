@@ -56,9 +56,9 @@ export const resolveCDNHost = async (
 ): Promise<string[]> => {
     const latencies = await Promise.allSettled(
         hosts.map(async (host) => {
-            const start = Date.now();
+            const start = Temporal.Now.instant().epochMilliseconds;
             await fetch(`https://${host}/`);
-            const end = Date.now();
+            const end = Temporal.Now.instant().epochMilliseconds;
             return {
                 host,
                 latency: end - start,
