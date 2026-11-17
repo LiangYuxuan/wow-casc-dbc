@@ -115,17 +115,11 @@ const parseRootFile = (inputBuffer: Buffer, eKey: string, cKey: string): RootDat
                 const fileCKey = buffer.toString('hex', pointer, pointer + 16);
                 pointer += 16;
 
-                if (fileDataID2CKey.has(fileDataID)) {
-                    fileDataID2CKey.get(fileDataID)?.push({
-                        cKey: fileCKey,
-                        contentFlags,
-                        localeFlags,
-                    });
-                } else {
-                    fileDataID2CKey.set(fileDataID, [
-                        { cKey: fileCKey, contentFlags, localeFlags },
-                    ]);
-                }
+                fileDataID2CKey.getOrInsert(fileDataID, []).push({
+                    cKey: fileCKey,
+                    contentFlags,
+                    localeFlags,
+                });
             }
 
             // eslint-disable-next-line no-bitwise
@@ -162,17 +156,11 @@ const parseRootFile = (inputBuffer: Buffer, eKey: string, cKey: string): RootDat
                 const nameHash = buffer.toString('hex', pointer + 16, pointer + 24);
                 pointer += 24;
 
-                if (fileDataID2CKey.has(fileDataID)) {
-                    fileDataID2CKey.get(fileDataID)?.push({
-                        cKey: fileCKey,
-                        contentFlags,
-                        localeFlags,
-                    });
-                } else {
-                    fileDataID2CKey.set(fileDataID, [
-                        { cKey: fileCKey, contentFlags, localeFlags },
-                    ]);
-                }
+                fileDataID2CKey.getOrInsert(fileDataID, []).push({
+                    cKey: fileCKey,
+                    contentFlags,
+                    localeFlags,
+                });
 
                 nameHash2FileDataID.set(nameHash, fileDataID);
             }

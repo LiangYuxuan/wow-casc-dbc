@@ -59,10 +59,7 @@ export default class ADBReader {
             };
             this.entries.push(entry);
 
-            if (!this.tableEntries.has(tableHash)) {
-                this.tableEntries.set(tableHash, []);
-            }
-            this.tableEntries.get(tableHash)?.push(entry);
+            this.tableEntries.getOrInsert(tableHash, []).push(entry);
 
             pointer += 32 + dataSize;
         }
